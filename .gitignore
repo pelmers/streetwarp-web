@@ -1,0 +1,6 @@
+node_modules
+dist
+video/*.mp4
+video/*.json
+/logs
+error_logs

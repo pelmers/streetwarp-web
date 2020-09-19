@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Streetwarp Web</title>
+  <meta name="description" content="Your route is a story. Turn it into an amazing animated hyperlapse movie using Streetwarp. Perfect for running, cycling, driving. Never get lost on the road." />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/static/vendor/sakura.css" />
+  <link rel="stylesheet" href="/static/index.css" />
+</head>
+
+<body>
+  <h1>Streetwarp Web</h1>
+  <i
+    >Hyperlapse GPX routes using Google Streetview
+    <a id="example" href="#">(see example)</a></i
+  >
+
+  <ol id="steps">
+    <li>
+      <button id="strava-button"><img src="/static/vendor/strava_btn.png" /></button>
+      <div id="strava-error">Strava Error message</div>
+      <div id="strava-connected"><img id="strava-profile" /><h4>Strava Connected as <span id="strava-name"></span></h4></div>
+      <h4 id="strava-activity-text">Enter Strava activity URL:</h4>
+      <input type="text" id="strava-activity-input" required />
+      <button id="strava-activity-button">Submit</button>
+      <h4 id="gpx-step-header">OR Upload GPX file</h4>
+      <div id="gpx-step-contents">
+        <div>
+          <button id="gpx-button">Select</button>
+          <input type="file" id="gpx-input" />
+        </div>
+        <div id="gpx-dragdrop">Or drag and drop here</div>
+      </div>
+    </li>
+    <li>
+      <h4>Choose target frame density</h4>
+      <div>
+        <input id="frame-density" type="range" min="3" max="200" value="60" />
+        <span id="frame-density-label">60</span>
+      </div>
+      <i style="font-size: 0.8em"
+        >Maximum number of streetview images requested per kilometer. Actual number may
+        be lower if duplicates are detected. In practice I don't think Streetview
+        provides more than about 150.</i
+      >
+      <div>
+        <button id="fetch-metadata">Fetch Metadata</button>
+      </div>
+    </li>
+    <li>
+      <h5>Stats:</h5>
+      <ul id="gpx-stats"></ul>
+    </li>
+    <li>
+      <h4>Enter Google API key</h4>
+      (<a style="font-size: 0.8em" href="#disclaimer">disclaimer</a>)
+      <br />
+      Not sure what this means? see <a href="#api-instructions">Instructions</a>
+      <br />
+      Each Google account comes with $200 a month of free API usage!
+      <input type="text" id="api-key-input" required />
+      <span class="bar"></span>
+      <label>API Key</label>
+    </li>
+    <li>
+      <h4>Build Hyperlapse</h4>
+      <br />
+      <i>Note:</i> processing this hyperlapse will cost about
+      <span id="cost-estimate"></span>
+      <br />
+      <i>Remember:</i> the first $200 a month is free, see your current usage
+      <a href="https://console.cloud.google.com/google/maps-apis/overview" target="_blank">here</a>
+      <div style="display: flex">
+        <button id="fast-button">Fast</button>
+        <button id="med-button">Balanced</button>
+        <button id="slow-button">Quality</button>
+      </div>
+    </li>
+    <li>
+      <a id="result-anchor"><button>View Result!</button></a>
+    </li>
+  </ol>
+  <div id="loading-spinner"></div>
+  <div id="loading-spinner-progress-text">0%</div>
+
+  <div id="api-notes">
+    <div id="api-instructions">
+      <i>How to get a Google API key:</i>
+      <ol>
+        <li>
+          Sign up for a Google Developer account
+          <a href="https://console.developers.google.com/" target="_blank">here</a>
+        </li>
+        <li>Create a new project with any name you like</li>
+        <li>Enable billing on your account <a href="https://console.cloud.google.com/project/_/billing/enable" target="_blank">here</a></li>
+        <li>
+          Activate the <b>Streetview Static API</b>
+          <a
+            href="https://console.cloud.google.com/apis/library/street-view-image-backend.googleapis.com" target="_blank"
+            >here</a
+          >
+        </li>
+        <li>
+          Retrieve your API key credentials
+          <a href="https://console.cloud.google.com/apis/credentials" target="_blank">here</a>
+        </li>
+      </ol>
+    </div>
+    <div id="disclaimer">
+      <i>Disclaimer:</i>
+      <ul>
+        <li>
+          I won't store your API key or use it outside of the context of this program
+        </li>
+        <li>Any cost incurred by usage of this program is your responsibility</li>
+        <li>
+          <a href="https://console.cloud.google.com/google/maps-apis/quotas" target="_blank"
+            >Set a quota</a
+          >
+          in the API console to avoid accidental overuse!
+        </li>
+      </ul>
+    </div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/dist/index.bundle.js" async defer></script>
+</body>
+</html>

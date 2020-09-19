@@ -1,0 +1,20 @@
+#container {
+    display: flex;
+}
+
+#video {
+    max-width: 640px;
+    flex: 1;
+    padding-right: 20px;
+}
+
+#map-container {
+    flex: 1;
+}
+
+body {
+    background-color: #f9f9f9;
+    padding: 13px;
+}
+
+/* TODO stack the things if screen is narrow: https://stackoverflow.com/questions/37218224/how-to-wrap-items-in-flexbox-for-smaller-screens */
