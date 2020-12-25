@@ -4,7 +4,7 @@
 
 ## Example:
 Click to view:
-[![Watch the demo](res/demo_screen.png)](res/demo_result.mp4)
+[![Watch the demo](res/demo_screen.png)](https://github.com/pelmers/streetwarp-web/blob/master/res/demo_result.mp4?raw=true)
 
 ### Description
 Streetwarp Web is the web-based frontend for
