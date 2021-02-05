@@ -50,7 +50,7 @@ export type GetStravaStatusMessage = {
     type: MESSAGE_TYPES.GET_STRAVA_STATUS;
     response?: {
         code: string;
-        acceptedScopes: string[];
+        acceptedScopes: string | string[];
     };
 };
 
@@ -72,6 +72,7 @@ export type GetStravaStatusResultMessage = {
 export type LoadStravaActivityMessage = {
     type: MESSAGE_TYPES.LOAD_STRAVA_ACTIVITY;
     id: number;
+    t: 'route' | 'activity';
     token: string;
 };
 

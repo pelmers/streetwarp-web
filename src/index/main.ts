@@ -1,51 +1,40 @@
-import { json } from 'express';
-import { waitForResult } from '../common/socket-client';
+import { send, waitForResult } from '../common/socket-client';
 import {
     MESSAGE_TYPES,
-    Message,
     FetchMetadataResultMessage,
     BuildHyperlapseResultMessage,
-    LoadStravaActivityResultMessage,
 } from '../messages';
-import { getStravaResult } from './strava';
-
-const socket = io();
-
-const send = (msg: Message) => socket.send(msg);
+import {
+    setLoadingText,
+    setLoadingStage,
+    hideLoader,
+    showLoader,
+    showNextStep,
+    isProcessing,
+    hideStepsAfter,
+    currentStepIndex,
+    setError,
+} from './steps';
+import { getStravaResult, loadStravaActivity } from './strava';
 
 async function waitForResultWithProgress<T>(type: MESSAGE_TYPES): Promise<T> {
     try {
         return await waitForResult<T>(
-            socket,
             type,
             ({ message }) => setLoadingText(message),
             ({ stage }) => setLoadingStage(stage)
         );
     } catch (e) {
-        setLoadingStage(`Error: ${(e as Error).message}`);
+        setError((e as Error).message);
     }
 }
-
-const $steps = Array.from(document.querySelector<HTMLOListElement>('#steps').children);
-let stepIndex = 0;
-const hideStepsAfter = (after: number) => {
-    stepIndex = after;
-    $steps.forEach(($s, idx) => {
-        if (idx > after) {
-            ($s as HTMLLIElement).style.display = 'none';
-        }
-    });
-};
-const showNextStep = () => {
-    ($steps[++stepIndex] as HTMLLIElement).style.display = 'list-item';
-};
-
 const $exampleLink = document.querySelector<HTMLAnchorElement>('#example');
 let exampleClicked = false;
+let exampleText = $exampleLink.textContent;
 $exampleLink.addEventListener('click', () => {
     if (exampleClicked) {
         // hide example
-        $exampleLink.innerHTML = '(see example)';
+        $exampleLink.innerHTML = exampleText;
     } else {
         // show example
         $exampleLink.innerHTML =
@@ -54,34 +43,9 @@ $exampleLink.addEventListener('click', () => {
     exampleClicked = !exampleClicked;
 });
 
-const $loading = document.querySelector<HTMLDivElement>('#loading-spinner');
-const $loadingProgressText = document.querySelector<HTMLDivElement>(
-    '#loading-spinner-progress-text'
-);
-let inProcessing = false;
-const showLoader = () => {
-    inProcessing = true;
-    $loading.style.display = 'inline-block';
-    $loadingProgressText.style.display = 'block';
-    setLoadingStage('');
-};
-let stage = '';
-const setLoadingStage = (text: string) => {
-    stage = text;
-    $loadingProgressText.innerText = text;
-};
-const setLoadingText = (text: string) => {
-    $loadingProgressText.innerText = `${stage}: ${text}`;
-};
-const hideLoader = () => {
-    inProcessing = false;
-    $loading.style.display = 'none';
-    $loadingProgressText.style.display = 'none';
-    setLoadingStage('');
-};
-
 // STEP 1: GET GPX FILE DATA
 const $stravaButton = document.querySelector<HTMLButtonElement>('#strava-button');
+const $rwgpsButton = document.querySelector<HTMLButtonElement>('#rwgps-button');
 const $stravaError = document.querySelector<HTMLDivElement>('#strava-error');
 const $stravaName = document.querySelector<HTMLSpanElement>('#strava-name');
 const $stravaProfile = document.querySelector<HTMLImageElement>('#strava-profile');
@@ -93,7 +57,7 @@ const $stravaActivityButton = document.querySelector<HTMLButtonElement>(
     '#strava-activity-button'
 );
 let stravaAccessToken: string;
-getStravaResult(socket, (e) => {
+getStravaResult((e) => {
     $stravaError.textContent =
         'Error connecting to Strava, click the button again (details in console)';
     console.error('Strava error', e);
@@ -107,6 +71,7 @@ getStravaResult(socket, (e) => {
     } else {
         stravaAccessToken = result.profile.token;
         $stravaButton.style.display = 'none';
+        $rwgpsButton.style.display = 'none';
         $stravaName.textContent = result.profile.name;
         $stravaProfile.src = result.profile.profileURL;
         $stravaConnected.style.display = 'inline-block';
@@ -128,38 +93,55 @@ getStravaResult(socket, (e) => {
 
 let jsonContents: string;
 $stravaActivityButton.addEventListener('click', async () => {
-    if (inProcessing) {
+    if (isProcessing()) {
         return;
     }
     hideStepsAfter(0);
     setLoadingStage('Loading Activity');
     showLoader();
-    const idRegex = /\/(\d+)/;
-    const match = idRegex.exec($stravaActivityInput.value)[1];
     try {
-        if (!match) {
-            throw new Error('no match for id in URL');
-        }
-        send({
-            type: MESSAGE_TYPES.LOAD_STRAVA_ACTIVITY,
-            id: Number.parseInt(match),
-            token: stravaAccessToken,
-        });
+        const { name, km, points } = await loadStravaActivity(
+            $stravaActivityInput.value,
+            stravaAccessToken
+        );
+        jsonContents = points;
+        document.querySelector<HTMLHeadingElement>(
+            '#strava-activity-text'
+        ).textContent = `${name}: ${km.toFixed(2)} km`;
+        $stravaActivityButton.style.display = 'none';
+        $stravaActivityInput.style.display = 'none';
+        showNextStep();
     } catch (e) {
-        setLoadingStage(`Could not parse activity id: ${e.message}`);
+        setError((e as Error).message);
+    } finally {
+        hideLoader();
     }
-    const { name, km, points } = await waitForResultWithProgress<
-        LoadStravaActivityResultMessage
-    >(MESSAGE_TYPES.LOAD_STRAVA_ACTIVITY_RESULT);
-    hideLoader();
-    // TODO show the activity name/distance here
-    jsonContents = points;
-    document.querySelector<HTMLHeadingElement>(
-        '#strava-activity-text'
-    ).textContent = `${name}: ${km.toFixed(2)} km`;
-    $stravaActivityButton.style.display = 'none';
-    $stravaActivityInput.style.display = 'none';
-    showNextStep();
+});
+
+const $rwgpsActivityInput = document.querySelector<HTMLInputElement>(
+    '#rwgps-activity-input'
+);
+const $rwgpsActivityButton = document.querySelector<HTMLButtonElement>(
+    '#rwgps-activity-button'
+);
+$rwgpsButton.addEventListener('click', () => {
+    $stravaButton.style.display = 'none';
+    $rwgpsButton.style.display = 'none';
+    document.querySelector<HTMLHeadingElement>('#gpx-step-header').style.display =
+        'none';
+    document.querySelector<HTMLDivElement>('#gpx-step-contents').style.display = 'none';
+    document.querySelector<HTMLHeadingElement>('#rwgps-activity-text').style.display =
+        'inline-block';
+    $rwgpsActivityButton.style.display = 'inline-block';
+    $rwgpsActivityInput.style.display = 'inline-block';
+    $rwgpsActivityInput.addEventListener(
+        'keypress',
+        (ev) => ev.code === 'Enter' && $rwgpsActivityButton.click()
+    );
+});
+$rwgpsActivityButton.addEventListener('click', () => {
+    // TODO: send request to server to load the route
+    setError(`Error: RWGPS not supported yet, please reload page`);
 });
 
 const $gpxInput = document.querySelector<HTMLInputElement>('#gpx-input');
@@ -210,7 +192,7 @@ const $fetchMetadataButton = document.querySelector<HTMLButtonElement>(
     '#fetch-metadata'
 );
 $fetchMetadataButton.addEventListener('click', async () => {
-    if (inProcessing) {
+    if (isProcessing()) {
         // If we're already processing something, ignore the button.
         return;
     }
@@ -226,20 +208,21 @@ $fetchMetadataButton.addEventListener('click', async () => {
         // Kilometers to miles
         frameDensity: $frameDensityInput.valueAsNumber * 1.60934,
     });
-    const metadataResult = await waitForResultWithProgress<FetchMetadataResultMessage>(
-        MESSAGE_TYPES.FETCH_METADATA_RESULT
-    );
-    if (!metadataResult) {
-        inProcessing = false;
-        return;
+    try {
+        const metadataResult = await waitForResult<FetchMetadataResultMessage>(
+            MESSAGE_TYPES.FETCH_METADATA_RESULT
+        );
+        populateStats(metadataResult);
+        showNextStep();
+        document.querySelector<HTMLDivElement>('#api-notes').style.display = 'block';
+        showNextStep();
+    } catch (e) {
+        setError((e as Error).message);
+    } finally {
+        hideLoader();
     }
-    hideLoader();
-    populateStats(metadataResult);
-    showNextStep();
-    document.querySelector<HTMLDivElement>('#api-notes').style.display = 'block';
-    showNextStep();
     await waitForNextApiKeyChange();
-    if (stepIndex === 3) {
+    if (currentStepIndex() === 3) {
         showNextStep();
     }
 });
@@ -248,7 +231,6 @@ const $gpxStatsList = document.querySelector<HTMLUListElement>('#gpx-stats');
 const $costEstimateText = document.querySelector<HTMLSpanElement>('#cost-estimate');
 function populateStats(metadataResult: FetchMetadataResultMessage) {
     const { frames, distance, averageError } = metadataResult;
-    // TODO put the points on a map as well?
     $gpxStatsList.innerHTML = `
     <li>Total distance: <b>${(distance / 1000).toFixed(2)} km</b></li>
     <li>Number of images: <b>${frames}</b> (${(frames / 30).toFixed(2)}s video)</li>
@@ -293,7 +275,7 @@ async function validateToken(token: string): Promise<void> {
 }
 
 const handleBuildButton = async (mode: string) => {
-    if (inProcessing) {
+    if (isProcessing()) {
         return;
     }
     showLoader();
@@ -301,8 +283,8 @@ const handleBuildButton = async (mode: string) => {
     try {
         await validateToken(apiKey);
     } catch (e) {
-        setLoadingStage((e as Error).message);
-        inProcessing = false;
+        setError((e as Error).message);
+        hideLoader();
         return;
     }
     const input =
@@ -319,9 +301,9 @@ const handleBuildButton = async (mode: string) => {
     const result = await waitForResultWithProgress<BuildHyperlapseResultMessage>(
         MESSAGE_TYPES.BUILD_HYPERLAPSE_RESULT
     );
-    inProcessing = false;
+    hideLoader();
     if (result != null) {
-        hideLoader();
+        // STEP 6: SHOW RESULTS
         document.querySelector<HTMLAnchorElement>('#result-anchor').href = result.url;
         showNextStep();
     }
@@ -330,8 +312,3 @@ const handleBuildButton = async (mode: string) => {
 $fastBuildButton.addEventListener('click', () => handleBuildButton('fast'));
 $medBuildButton.addEventListener('click', () => handleBuildButton('med'));
 $slowBuildButton.addEventListener('click', () => handleBuildButton('slow'));
-
-// STEP 6: SHOW RESULTS
-// TODO show video and animation of the map while video plays
-// https://docs.mapbox.com/mapbox-gl-js/api/
-// https://docs.mapbox.com/mapbox-gl-js/example/geojson-line/

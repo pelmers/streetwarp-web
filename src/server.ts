@@ -5,6 +5,7 @@ import util from 'util';
 import * as uuid from 'uuid';
 
 import express from 'express';
+import compression from 'compression';
 import consoleStamp from 'console-stamp';
 import io from 'socket.io';
 import ws from 'ws';
@@ -19,7 +20,6 @@ import {
     MetadataResult,
 } from './messages';
 import { r, d } from './constants';
-// TODO: make some command line flag to use local instead of lambda (or probably local by default)
 import LocalMethods from './streetwarp-local';
 import LambdaMethods from './streetwarp-lambda';
 // @ts-ignore no types for this api
@@ -27,6 +27,11 @@ import stravaApi from 'strava-v3';
 import { IncomingMessage } from 'http';
 
 consoleStamp(console);
+const useLambda =
+    process.env['AWS_ACCESS_KEY_ID'] &&
+    process.env['AWS_SECRET_ACCESS_KEY'] &&
+    process.env['AWS_LAMBDA_REGION'];
+
 async function question(msg: string): Promise<string> {
     const rl = readline.createInterface({
         input: process.stdin,
@@ -43,17 +48,28 @@ const port = 4041;
 const streetwarpBinIndex = process.argv.findIndex((arg) =>
     arg.startsWith('--streetwarp-bin')
 );
+const helpIndex = process.argv.findIndex((arg) => arg === '-h' || arg === '--help');
 let googleApiKey = process.env['GOOGLE_API_KEY'];
 let mapboxApiKey = process.env['MAPBOX_API_KEY'];
 let streetwarpBin: string;
 
 async function main() {
+    if (helpIndex > 0) {
+        console.log(`Usage: ts-node src/server.ts [--streetwarp-bin=PATH_TO_STREETWARP]
+
+Path to streetwarp is only required if executing it local to the server. For AWS lambda execution,
+provide the environment variables AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_LAMBDA_REGION.
+
+Other required environment variables: GOOGLE_API_KEY, MAPBOX_API_KEY
+        `);
+        return;
+    }
     if (streetwarpBinIndex > 0) {
         streetwarpBin =
             process.argv[streetwarpBinIndex].split('=')[1] ||
             process.argv[streetwarpBinIndex + 1];
     }
-    if (streetwarpBin == null || streetwarpBin.length === 0) {
+    if (!useLambda && (streetwarpBin == null || streetwarpBin.length === 0)) {
         streetwarpBin = await question('Path to streetwarp binary: ');
     }
     if (googleApiKey == null || googleApiKey.length === 0) {
@@ -63,6 +79,7 @@ async function main() {
         mapboxApiKey = await question('Mapbox API key: ');
     }
 
+    app.use(compression());
     app.use('/static', express.static(r('static')));
     app.use('/dist', express.static(r('dist')));
     app.use('/video', express.static(r('video')));
@@ -75,11 +92,6 @@ async function main() {
         handleConnection(socket);
     });
 
-    /*
-    io(server).path('/progress-connection').on('connection', (socket) => {
-        handleProgressConnection(socket);
-    });
-    */
     const wss = new ws.Server({ server, path: '/progress-connection' });
     wss.on('connection', (socket, req) => handleProgressConnection(socket, req));
 }
@@ -166,8 +178,6 @@ function handleConnection(socket: io.Socket) {
     }
 
     async function handleStravaStatusImpl(msg: GetStravaStatusMessage) {
-        // TODO if code is given, exchange it with strava for oauth token
-        // TODO otherwise send back error
         if (!msg.response) {
             reply({
                 type: MESSAGE_TYPES.GET_STRAVA_STATUS_RESULT,
@@ -199,23 +209,30 @@ function handleConnection(socket: io.Socket) {
 
     async function handleStravaLoadActivity(msg: LoadStravaActivityMessage) {
         try {
-            const { id, token } = msg;
+            const { id, token, t } = msg;
             // @ts-ignore strava api has wrong typings
             const client = new stravaApi.client(token);
-            const [activity, streams] = await Promise.all([
-                client.activities.get({ id }),
-                client.streams.activity({ id, types: 'latlng' }),
-            ]);
-            const latlngs = (streams as any[]).find(({ type }) => type === 'latlng')
-                .data;
-            reply({
-                type: MESSAGE_TYPES.LOAD_STRAVA_ACTIVITY_RESULT,
-                name: activity.name,
-                km: activity.distance / 1000,
-                points: JSON.stringify(
-                    (latlngs as number[][]).map(([lat, lng]) => ({ lat, lng }))
-                ),
-            });
+            if (t === 'activity') {
+                const [activity, streams] = await Promise.all([
+                    client.activities.get({ id }),
+                    client.streams.activity({ id, types: 'latlng' }),
+                ]);
+                const latlngs = (streams as any[]).find(({ type }) => type === 'latlng')
+                    .data;
+                reply({
+                    type: MESSAGE_TYPES.LOAD_STRAVA_ACTIVITY_RESULT,
+                    name: activity.name,
+                    km: activity.distance / 1000,
+                    points: JSON.stringify(
+                        (latlngs as number[][]).map(([lat, lng]) => ({ lat, lng }))
+                    ),
+                });
+            } else {
+                // TODO get route, not in strava node api https://github.com/UnbounDev/node-strava-v3/issues/107
+                throw new Error(
+                    'Routes are not supported yet (see https://github.com/UnbounDev/node-strava-v3/issues/107)'
+                );
+            }
         } catch (e) {
             console.error(e.message);
             reply({ type: MESSAGE_TYPES.ERROR, error: (e as Error).message });
@@ -226,19 +243,18 @@ function handleConnection(socket: io.Socket) {
         const key = uuid.v4().slice(0, 8);
         socketsByKey.set(key, socket);
         try {
-            /*
-            const result = await LocalMethods.fetchMetadata(msg, {
-                cmd: streetwarpBin,
-                googleApiKey,
-                key,
-                onProgress: reply,
-                onProcess: runningProcesses.push.bind(runningProcesses),
-            });
-            */
-            const result = await LambdaMethods.fetchMetadata(msg, {
-                key,
-                googleApiKey,
-            });
+            const result = useLambda
+                ? await LambdaMethods.fetchMetadata(msg, {
+                      key,
+                      googleApiKey,
+                  })
+                : await LocalMethods.fetchMetadata(msg, {
+                      cmd: streetwarpBin,
+                      googleApiKey,
+                      key,
+                      onProgress: reply,
+                      onProcess: runningProcesses.push.bind(runningProcesses),
+                  });
             reply({
                 type: MESSAGE_TYPES.FETCH_METADATA_RESULT,
                 ...result,
@@ -266,23 +282,22 @@ function handleConnection(socket: io.Socket) {
         try {
             const metadataPath = r(`video/${key}.json`);
             let metadataResult: MetadataResult;
-            /*
-            const url = await LocalMethods.buildHyperlapse(msg, {
-                cmd: streetwarpBin,
-                googleApiKey: msg.apiKey,
-                onProcess: runningProcesses.push.bind(runningProcesses),
-                onProgress: reply,
-                key,
-                onMessage: (msg) => {
-                    metadataResult = msg as MetadataResult;
-                },
-            });
-            */
-            const remoteUrl = await LambdaMethods.buildHyperlapse(
-                msg,
-                { googleApiKey: msg.apiKey, key },
-                (metadata) => (metadataResult = metadata)
-            );
+            const remoteUrl = useLambda
+                ? await LambdaMethods.buildHyperlapse(
+                      msg,
+                      { googleApiKey: msg.apiKey, key },
+                      (metadata) => (metadataResult = metadata)
+                  )
+                : await LocalMethods.buildHyperlapse(msg, {
+                      cmd: streetwarpBin,
+                      googleApiKey: msg.apiKey,
+                      onProcess: runningProcesses.push.bind(runningProcesses),
+                      onProgress: reply,
+                      key,
+                      onMessage: (msg) => {
+                          metadataResult = msg as MetadataResult;
+                      },
+                  });
             await util.promisify(fs.writeFile)(
                 metadataPath,
                 JSON.stringify(metadataResult)

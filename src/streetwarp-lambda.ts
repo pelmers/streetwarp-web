@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import util from 'util';
 import { d, FRAME_LIMIT_PER_VIDEO } from './constants';
 import {

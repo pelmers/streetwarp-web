@@ -14,17 +14,24 @@
   <h1>Streetwarp Web</h1>
   <i
     >Hyperlapse GPX routes using Google Streetview
-    <a id="example" href="#">(see example)</a></i
+    <a id="example" href="#">(what does that look like?)</a></i
   >
 
   <ol id="steps">
     <li>
       <button id="strava-button"><img src="/static/vendor/strava_btn.png" /></button>
+      <button id="rwgps-button"><img src="/static/vendor/ridewithgps_btn.png" /></button>
       <div id="strava-error">Strava Error message</div>
       <div id="strava-connected"><img id="strava-profile" /><h4>Strava Connected as <span id="strava-name"></span></h4></div>
-      <h4 id="strava-activity-text">Enter Strava activity URL:</h4>
+      <h4 id="strava-activity-text">Enter Strava activity or route URL:</h4>
       <input type="text" id="strava-activity-input" required />
       <button id="strava-activity-button">Submit</button>
+
+      <div id="rwgps-error">Strava Error message</div>
+      <h4 id="rwgps-activity-text">Enter Ride With GPS route URL:</h4>
+      <input type="text" id="rwgps-activity-input" required />
+      <button id="rwgps-activity-button">Submit</button>
+ 
       <h4 id="gpx-step-header">OR Upload GPX file</h4>
       <div id="gpx-step-contents">
         <div>
@@ -123,6 +130,10 @@
         </li>
       </ul>
     </div>
+  </div>
+  <div id="footer">
+    <a href="https://pelmers.com">About</a>
+    <a href="https://github.com/pelmers/streetwarp-web">Source</a>
   </div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/dist/index.bundle.js" async defer></script>

@@ -6,8 +6,11 @@ import {
     ProgressStageMessage,
 } from '../messages';
 
+export const socket = io();
+
+export const send = (msg: Message) => socket.send(msg);
+
 export async function waitForResult<T>(
-    socket: SocketIOClient.Socket,
     type: MESSAGE_TYPES,
     onProgress?: (msg: ProgressMessage) => void,
     onProgressStage?: (msg: ProgressStageMessage) => void
@@ -39,11 +42,10 @@ export async function waitForResult<T>(
     return promise;
 }
 
-export async function getMapboxKey(socket: SocketIOClient.Socket) {
-    socket.send({ type: MESSAGE_TYPES.GET_MAPBOX_KEY });
+export async function getMapboxKey() {
+    send({ type: MESSAGE_TYPES.GET_MAPBOX_KEY });
     return (
         await waitForResult<GetMapboxKeyResultMessage>(
-            socket,
             MESSAGE_TYPES.GET_MAPBOX_KEY_RESULT
         )
     ).key;

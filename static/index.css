@@ -1,3 +1,4 @@
+#rwgps-button,
 #strava-button {
     border: 0;
     margin: 0px;
@@ -5,6 +6,7 @@
     width: auto;
 }
 
+#rwgps-button img,
 #strava-button img {
     margin-bottom: -1em;
     width: 100%;
@@ -12,6 +14,7 @@
     max-height: 2.5em;
 }
 
+#rwgps-error,
 #strava-error {
     display: none;
     font-style: italic;
@@ -34,16 +37,16 @@
     width: auto;
 }
 
+#rwgps-activity-text,
 #strava-activity-text {
     display: none;
     font-weight: 400;
     margin-top: -0.2em;
 }
 
-#strava-activity-input {
-    display: none;
-}
-
+#rwgps-activity-input,
+#strava-activity-input,
+#rwgps-activity-button,
 #strava-activity-button {
     display: none;
 }
@@ -53,13 +56,14 @@
 }
 
 #gpx-dragdrop {
-    width: 100%;
     text-align: center;
     height: 100px;
     background-color: #d5d5d5;
     margin-top: 10px;
     vertical-align: middle;
     line-height: 100px;
+    margin-left: 6px;
+    margin-right: 6px;
     border-style: dashed;
     border-width: 3px;
     border-color: #a5a5a5;
@@ -221,4 +225,17 @@ button {
     font-size: 1.3em;
     line-height: 2em;
     margin: 10px;
+}
+
+#footer {
+    border: 0 solid #2c8898;
+    border-color: rgb(213, 214, 216);
+    border-top-width: 2px;
+    margin-top: 1.2em;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+#footer a {
+    margin-right: 2em;
 }

@@ -19,8 +19,6 @@ export async function createMapFromRoutes(
         center: findCenter(metadata),
         style: 'mapbox://styles/mapbox/outdoors-v11',
     });
-    // TODO get the metadata and plot the route
-    // TODO hook up video playback events to animate icon on map
     const addSource = (
         id: string,
         points: { lat: number; lng: number }[],

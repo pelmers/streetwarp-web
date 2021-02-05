@@ -1,26 +1,27 @@
 import { FetchMetadataResultMessage, Message, MESSAGE_TYPES } from '../messages';
 import mapboxgl from 'mapbox-gl';
-import { getMapboxKey as getMapboxToken, waitForResult } from '../common/socket-client';
+import {
+    getMapboxKey as getMapboxToken,
+    send,
+    waitForResult,
+} from '../common/socket-client';
 import { createMapFromRoutes, toGeoJson } from '../common/map';
 
 const $video = document.querySelector<HTMLVideoElement>('#video');
 const parts = window.location.pathname.split('/').filter((p) => p.length > 0);
 const key = parts[parts.length - 1];
 
-const socket = io();
-
 async function getExistingMetadata(): Promise<FetchMetadataResultMessage> {
-    socket.send({ type: MESSAGE_TYPES.FETCH_EXISTING_METADATA, key });
+    send({ type: MESSAGE_TYPES.FETCH_EXISTING_METADATA, key });
     return waitForResult<FetchMetadataResultMessage>(
-        socket,
         MESSAGE_TYPES.FETCH_METADATA_RESULT
     );
 }
 
-//$video.src = `${window.origin}/video/${key}.mp4`;
+// $video.src = `${window.origin}/video/${key}.mp4`;
 $video.src = new URLSearchParams(window.location.search).get('src');
 // TODO show error if these fetches fail
-Promise.all([getMapboxToken(socket), getExistingMetadata()]).then(
+Promise.all([getMapboxToken(), getExistingMetadata()]).then(
     async ([token, metadata]) => {
         // @ts-ignore gotta assign it once
         mapboxgl.accessToken = token;
