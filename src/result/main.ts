@@ -20,6 +20,7 @@ async function getExistingMetadata(): Promise<FetchMetadataResultMessage> {
 
 // $video.src = `${window.origin}/video/${key}.mp4`;
 $video.src = new URLSearchParams(window.location.search).get('src');
+// TODO add video playback speed controls
 // TODO show error if these fetches fail
 Promise.all([getMapboxToken(), getExistingMetadata()]).then(
     async ([token, metadata]) => {

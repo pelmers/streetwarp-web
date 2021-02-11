@@ -239,3 +239,10 @@ button {
 #footer a {
     margin-right: 2em;
 }
+
+#logo {
+    max-height: 4em;
+    margin-top: 3rem;
+    margin-bottom: 1.5rem;
+    display: block;
+}

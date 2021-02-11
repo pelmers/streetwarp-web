@@ -8,10 +8,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="/static/vendor/sakura.css" />
   <link rel="stylesheet" href="/static/index.css" />
-</head>
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-8YH10VVH20"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-8YH10VVH20');
+  </script>
+  </head>
 
 <body>
-  <h1>Streetwarp Web</h1>
+  <img id="logo" src="/static/logo.png" alt="StreetWarp Web"></img>
   <i
     >Hyperlapse GPX routes using Google Streetview
     <a id="example" href="#">(what does that look like?)</a></i
@@ -24,12 +33,12 @@
       <div id="strava-error">Strava Error message</div>
       <div id="strava-connected"><img id="strava-profile" /><h4>Strava Connected as <span id="strava-name"></span></h4></div>
       <h4 id="strava-activity-text">Enter Strava activity or route URL:</h4>
-      <input type="text" id="strava-activity-input" required />
+      <input type="text" id="strava-activity-input" required placeholder="e.g. https://www.strava.com/activities/4090356826" />
       <button id="strava-activity-button">Submit</button>
 
       <div id="rwgps-error">Strava Error message</div>
       <h4 id="rwgps-activity-text">Enter Ride With GPS route URL:</h4>
-      <input type="text" id="rwgps-activity-input" required />
+      <input type="text" id="rwgps-activity-input" required placeholder="e.g. https://ridewithgps.com/routes/34667080"/>
       <button id="rwgps-activity-button">Submit</button>
  
       <h4 id="gpx-step-header">OR Upload GPX file</h4>
@@ -86,7 +95,7 @@
       </div>
     </li>
     <li>
-      <a id="result-anchor"><button>View Result!</button></a>
+      <a id="result-anchor" target="_blank"><button>View Result!</button></a>
     </li>
   </ol>
   <div id="loading-spinner"></div>
@@ -134,6 +143,8 @@
   <div id="footer">
     <a href="https://pelmers.com">About</a>
     <a href="https://github.com/pelmers/streetwarp-web">Source</a>
+    <a href="https://github.com/pelmers/streetwarp-web/issues/">Report bug</a>
+    <a href="https://github.com/pelmers/streetwarp-web/issues/">Request feature</a>
   </div>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/dist/index.bundle.js" async defer></script>

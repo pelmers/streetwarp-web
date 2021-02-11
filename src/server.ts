@@ -6,6 +6,7 @@ import * as uuid from 'uuid';
 
 import express from 'express';
 import compression from 'compression';
+import favicon from 'serve-favicon';
 import consoleStamp from 'console-stamp';
 import io from 'socket.io';
 import ws from 'ws';
@@ -80,6 +81,7 @@ Other required environment variables: GOOGLE_API_KEY, MAPBOX_API_KEY
     }
 
     app.use(compression());
+    app.use(favicon(r('static/favicon.ico')));
     app.use('/static', express.static(r('static')));
     app.use('/dist', express.static(r('dist')));
     app.use('/video', express.static(r('video')));

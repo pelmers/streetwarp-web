@@ -8,14 +8,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css" rel="stylesheet" />
     <link rel="stylesheet" href="/static/result.css">
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8YH10VVH20"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-8YH10VVH20');
+    </script>
 </head>
 
 <body>
     <div id='container'>
-        <video id="video" width="640" height="480" controls></video>
+        <video id="video" width="640" height="480" controls preload="metadata"></video>
         <div id="map-container"></div>
     </div>
     <ul>
+        <li>Playback speed: 1/4x 1/3x 1/2x 1x 2x 3x 4x</li>
         <li> Gray line = GPS track, (thicker) Blue line = Streetview track</li>
     </ul>
     <script src="/socket.io/socket.io.js"></script>
