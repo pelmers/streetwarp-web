@@ -13,6 +13,8 @@ export enum MESSAGE_TYPES {
     GET_STRAVA_STATUS_RESULT = 'GET_STRAVA_STATUS_RESULT',
     LOAD_STRAVA_ACTIVITY = 'LOAD_STRAVA_ACTIVITY',
     LOAD_STRAVA_ACTIVITY_RESULT = 'LOAD_STRAVA_ACTIVITY_RESULT',
+    LOAD_RWGPS_ROUTE = 'LOAD_RWGPS_ROUTE',
+    LOAD_RWGPS_ROUTE_RESULT = 'LOAD_RWGPS_ROUTE_RESULT',
 }
 
 export type FetchMetadataMessage = {
@@ -83,6 +85,18 @@ export type LoadStravaActivityResultMessage = {
     points: string;
 };
 
+export type LoadRWGPSRouteMessage = {
+    type: MESSAGE_TYPES.LOAD_RWGPS_ROUTE;
+    id: number;
+};
+
+export type LoadRWGPSRouteResultMessage = {
+    type: MESSAGE_TYPES.LOAD_RWGPS_ROUTE_RESULT;
+    name: string;
+    km: number;
+    points: string;
+};
+
 export type ProgressStageMessage = {
     type: MESSAGE_TYPES.PROGRESS_STAGE;
     stage: string;
@@ -132,4 +146,6 @@ export type Message =
     | BuildHyperlapseMessage
     | BuildHyperlapseResultMessage
     | GetMapboxKeyMessage
-    | GetMapboxKeyResultMessage;
+    | GetMapboxKeyResultMessage
+    | LoadRWGPSRouteMessage
+    | LoadRWGPSRouteResultMessage;

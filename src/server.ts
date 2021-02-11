@@ -15,6 +15,7 @@ import {
     BuildHyperlapseMessage,
     FetchMetadataMessage,
     GetStravaStatusMessage,
+    LoadRWGPSRouteMessage,
     LoadStravaActivityMessage,
     Message,
     MESSAGE_TYPES,
@@ -25,7 +26,10 @@ import LocalMethods from './streetwarp-local';
 import LambdaMethods from './streetwarp-lambda';
 // @ts-ignore no types for this api
 import stravaApi from 'strava-v3';
+// @ts-ignore no types for this api
+import gpxParser from 'gpxparser';
 import { IncomingMessage } from 'http';
+import fetch from 'node-fetch';
 
 consoleStamp(console);
 const useLambda =
@@ -139,6 +143,9 @@ function handleConnection(socket: io.Socket) {
             case MESSAGE_TYPES.LOAD_STRAVA_ACTIVITY:
                 await handleStravaLoadActivity(msg);
                 break;
+            case MESSAGE_TYPES.LOAD_RWGPS_ROUTE:
+                await handleRwgpsLoadRoute(msg);
+                break;
             case MESSAGE_TYPES.FETCH_METADATA:
                 await handleFetchMetadata(msg);
                 break;
@@ -241,22 +248,53 @@ function handleConnection(socket: io.Socket) {
         }
     }
 
+    async function handleRwgpsLoadRoute(msg: LoadRWGPSRouteMessage) {
+        // TODO handle ride with gps load route
+        // use gpxparser to parse gpx file
+        // ex. url https://ridewithgps.com/routes/34667080.gpx?sub_format=track
+        try {
+            const response = await fetch(
+                `https://ridewithgps.com/routes/${msg.id}.gpx?sub_format=track`
+            );
+            if (response.status !== 200) {
+                throw new Error(
+                    `Route fetch failed: ${response.status} - ${response.statusText
+                    }, ${(await response.text()).slice(0, 90)}`
+                );
+            }
+            const gpx = new gpxParser();
+            const gpxContents = await response.text();
+            gpx.parse(gpxContents);
+            const distance = gpx.tracks[0].distance.total;
+            const points = JSON.stringify(gpx.tracks[0].points.map((p: any) => ({ lat: p.lat, lng: p.lon })));
+            reply({
+                type: MESSAGE_TYPES.LOAD_RWGPS_ROUTE_RESULT,
+                name: gpx.metadata.name,
+                km: distance / 1000,
+                points
+            });
+        } catch (e) {
+            console.error(e.message);
+            reply({ type: MESSAGE_TYPES.ERROR, error: (e as Error).message });
+        }
+    }
+
     async function handleFetchMetadata(msg: FetchMetadataMessage) {
         const key = uuid.v4().slice(0, 8);
         socketsByKey.set(key, socket);
         try {
             const result = useLambda
                 ? await LambdaMethods.fetchMetadata(msg, {
-                      key,
-                      googleApiKey,
-                  })
+                    key,
+                    googleApiKey,
+                })
                 : await LocalMethods.fetchMetadata(msg, {
-                      cmd: streetwarpBin,
-                      googleApiKey,
-                      key,
-                      onProgress: reply,
-                      onProcess: runningProcesses.push.bind(runningProcesses),
-                  });
+                    cmd: streetwarpBin,
+                    googleApiKey,
+                    key,
+                    onProgress: reply,
+                    onProcess: runningProcesses.push.bind(runningProcesses),
+                });
             reply({
                 type: MESSAGE_TYPES.FETCH_METADATA_RESULT,
                 ...result,
@@ -286,20 +324,20 @@ function handleConnection(socket: io.Socket) {
             let metadataResult: MetadataResult;
             const remoteUrl = useLambda
                 ? await LambdaMethods.buildHyperlapse(
-                      msg,
-                      { googleApiKey: msg.apiKey, key },
-                      (metadata) => (metadataResult = metadata)
-                  )
+                    msg,
+                    { googleApiKey: msg.apiKey, key },
+                    (metadata) => (metadataResult = metadata)
+                )
                 : await LocalMethods.buildHyperlapse(msg, {
-                      cmd: streetwarpBin,
-                      googleApiKey: msg.apiKey,
-                      onProcess: runningProcesses.push.bind(runningProcesses),
-                      onProgress: reply,
-                      key,
-                      onMessage: (msg) => {
-                          metadataResult = msg as MetadataResult;
-                      },
-                  });
+                    cmd: streetwarpBin,
+                    googleApiKey: msg.apiKey,
+                    onProcess: runningProcesses.push.bind(runningProcesses),
+                    onProgress: reply,
+                    key,
+                    onMessage: (msg) => {
+                        metadataResult = msg as MetadataResult;
+                    },
+                });
             await util.promisify(fs.writeFile)(
                 metadataPath,
                 JSON.stringify(metadataResult)

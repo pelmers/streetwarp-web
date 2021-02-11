@@ -4,6 +4,7 @@ import {
     FetchMetadataResultMessage,
     BuildHyperlapseResultMessage,
 } from '../messages';
+import { loadRWGPSRoute } from './rwgps';
 import {
     setLoadingText,
     setLoadingStage,
@@ -126,6 +127,7 @@ const $rwgpsActivityButton = document.querySelector<HTMLButtonElement>(
 );
 $rwgpsButton.addEventListener('click', () => {
     $stravaButton.style.display = 'none';
+    $stravaError.style.display = 'none';
     $rwgpsButton.style.display = 'none';
     document.querySelector<HTMLHeadingElement>('#gpx-step-header').style.display =
         'none';
@@ -139,9 +141,23 @@ $rwgpsButton.addEventListener('click', () => {
         (ev) => ev.code === 'Enter' && $rwgpsActivityButton.click()
     );
 });
-$rwgpsActivityButton.addEventListener('click', () => {
-    // TODO: send request to server to load the route
-    setError(`Error: RWGPS not supported yet, please reload page`);
+$rwgpsActivityButton.addEventListener('click', async () => {
+    setLoadingStage('Loading Route');
+    showLoader();
+    try {
+        const { name, km, points } = await loadRWGPSRoute($rwgpsActivityInput.value);
+        jsonContents = points;
+        document.querySelector<HTMLHeadingElement>(
+            '#rwgps-activity-text'
+        ).textContent = `${name}: ${km.toFixed(2)} km`;
+        $rwgpsActivityButton.style.display = 'none';
+        $rwgpsActivityInput.style.display = 'none';
+        showNextStep();
+    } catch (e) {
+        setError((e as Error).message);
+    } finally {
+        hideLoader();
+    }
 });
 
 const $gpxInput = document.querySelector<HTMLInputElement>('#gpx-input');
