@@ -249,7 +249,6 @@ function handleConnection(socket: io.Socket) {
     }
 
     async function handleRwgpsLoadRoute(msg: LoadRWGPSRouteMessage) {
-        // TODO handle ride with gps load route
         // use gpxparser to parse gpx file
         // ex. url https://ridewithgps.com/routes/34667080.gpx?sub_format=track
         try {

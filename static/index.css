@@ -3,7 +3,7 @@
     border: 0;
     margin: 0px;
     background-color: transparent;
-    width: auto;
+    max-width: 260px;
 }
 
 #rwgps-button img,
