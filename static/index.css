@@ -245,4 +245,5 @@ button {
     margin-top: 3rem;
     margin-bottom: 1.5rem;
     display: block;
+    cursor: pointer;
 }

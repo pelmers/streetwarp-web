@@ -14,7 +14,7 @@ Streetwarp Web is the web-based frontend for
 produces hyperlapses for GPX routes. This project is simply a web page and
 associated server that invokes the command line tool. The live deployment uses
 [streetwarp-lambda](https://github.com/pelmers/streetwarp-lambda) running on
-[AWS Lambda](https://aws.amazon.com/lambda/) to invoke the tool with loading
+[AWS Lambda](https://aws.amazon.com/lambda/) to invoke the tool without loading
 the web server.
 
 ### Features

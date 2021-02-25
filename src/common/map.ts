@@ -22,7 +22,7 @@ export async function createMapFromRoutes(
     const addSource = (
         id: string,
         points: { lat: number; lng: number }[],
-        params: mapboxgl.AnyPaint
+        params: mapboxgl.LinePaint
     ) => {
         map.addSource(id, {
             type: 'geojson',
