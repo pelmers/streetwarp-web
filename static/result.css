@@ -1,5 +1,6 @@
 #container {
     display: flex;
+    margin-bottom: 1em;
 }
 
 #video {
@@ -12,9 +13,59 @@
     flex: 1;
 }
 
+#logo {
+    max-height: 4em;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+    display: block;
+    cursor: pointer;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 body {
     background-color: #f9f9f9;
-    padding: 13px;
+    max-width: 100vw !important;
+    padding: 13px !important;
+}
+
+/* Dropdown Button */
+.dropbtn {
+    font-size: 1.3em;
+    border: none;
+    cursor: pointer;
+}
+
+/* The container <div> - needed to position the dropdown content */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f1f1f1;
+    min-width: 6em;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    left: 9em;
+    z-index: 1;
+}
+
+/* Links inside the dropdown */
+.dropdown-content p {
+    color: black;
+    padding: 4px 6px;
+    text-decoration: none;
+    display: block;
+    cursor: pointer;
+    margin-bottom: 0px;
+}
+
+/* Change color of dropdown links on hover */
+.dropdown-content p:hover {
+    background-color: #ddd;
 }
 
 /* TODO stack the things if screen is narrow: https://stackoverflow.com/questions/37218224/how-to-wrap-items-in-flexbox-for-smaller-screens */

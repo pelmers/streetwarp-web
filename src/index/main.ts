@@ -43,7 +43,9 @@ $exampleLink.addEventListener('click', () => {
     }
     exampleClicked = !exampleClicked;
 });
-document.querySelector<HTMLImageElement>('#logo').addEventListener('click', () => window.location.href = 'https://streetwarp.ml/');
+document
+    .querySelector<HTMLImageElement>('#logo')
+    .addEventListener('click', () => (window.location.href = 'https://streetwarp.ml/'));
 
 // STEP 1: GET GPX FILE DATA
 const $stravaButton = document.querySelector<HTMLButtonElement>('#strava-button');

@@ -10,6 +10,29 @@ import { createMapFromRoutes, toGeoJson } from '../common/map';
 const $video = document.querySelector<HTMLVideoElement>('#video');
 const parts = window.location.pathname.split('/').filter((p) => p.length > 0);
 const key = parts[parts.length - 1];
+document
+    .querySelector<HTMLImageElement>('#logo')
+    .addEventListener('click', () => (window.location.href = 'https://streetwarp.ml/'));
+let showDrop = false;
+const $dropContent = document.querySelector<HTMLDivElement>('.dropdown-content');
+const $dropBtn = document.querySelector<HTMLButtonElement>('.dropbtn');
+$dropContent.querySelectorAll<HTMLParagraphElement>('p').forEach((e) => {
+    e.addEventListener('click', () => {
+        const val = Number.parseFloat(e.textContent.slice(0, e.textContent.length - 1));
+        $video.playbackRate = val;
+        showDrop = false;
+        $dropContent.style.display = 'none';
+        $dropBtn.textContent = e.textContent;
+    });
+});
+$dropBtn.addEventListener('click', () => {
+    if (!showDrop) {
+        $dropContent.style.display = 'block';
+    } else {
+        $dropContent.style.display = 'none';
+    }
+    showDrop = !showDrop;
+});
 
 async function getExistingMetadata(): Promise<FetchMetadataResultMessage> {
     send({ type: MESSAGE_TYPES.FETCH_EXISTING_METADATA, key });
