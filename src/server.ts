@@ -202,7 +202,6 @@ function handleConnection(socket: io.Socket) {
                 throw new Error('App not given permission to read activities');
             }
             const stravaResponse = await stravaApi.oauth.getToken(code);
-            console.log('strava says', JSON.stringify(stravaResponse));
             reply({
                 type: MESSAGE_TYPES.GET_STRAVA_STATUS_RESULT,
                 result: {
@@ -324,6 +323,9 @@ function handleConnection(socket: io.Socket) {
         try {
             const metadataPath = r(`video/${key}.json`);
             let metadataResult: MetadataResult;
+            d(
+                `Requesting hyperlapse [${key}], opt=${msg.optimize}, mode=${msg.mode}, density=${msg.frameDensity}`
+            );
             const remoteUrl = useLambda
                 ? await LambdaMethods.buildHyperlapse(
                       msg,

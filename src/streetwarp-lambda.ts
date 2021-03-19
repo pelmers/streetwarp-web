@@ -28,6 +28,7 @@ aws.config.logger = console;
 async function callLambda(
     key: string,
     args: string[],
+    useOptimizer: boolean,
     contents: string,
     extension: 'gpx' | 'json'
 ): Promise<{
@@ -45,7 +46,8 @@ async function callLambda(
             args,
             contents,
             extension,
-            callbackEndpoint: 'https://streetwarp.ml/progress-connection',
+            useOptimizer,
+            callbackEndpoint: 'wss://streetwarp.ml/progress-connection',
         }),
     });
     let parsedResponse;
@@ -81,7 +83,7 @@ async function fetchMetadata(
         msg.frameDensity.toString(),
         '--json',
     ];
-    return (await callLambda(params.key, args, msg.input.contents, msg.input.extension))
+    return (await callLambda(params.key, args, false, msg.input.contents, msg.input.extension))
         .metadataResult;
 }
 
@@ -105,9 +107,16 @@ async function buildHyperlapse(
         '--minterp',
         minterp,
     ];
+    if (msg.optimize) {
+        args.push(
+            '--optimizer-arg',
+            JSON.stringify({ ratio_test: 0.75, n_features: 360, velocity_factor: 100 })
+        );
+    }
     const result = await callLambda(
         params.key,
         args,
+        msg.optimize,
         msg.input.contents,
         msg.input.extension
     );

@@ -116,6 +116,7 @@ export type BuildHyperlapseMessage = {
         extension: 'json' | 'gpx';
     };
     mode: 'fast' | 'med' | 'slow';
+    optimize: boolean;
 };
 
 export type BuildHyperlapseResultMessage = {

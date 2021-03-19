@@ -279,6 +279,9 @@ const waitForNextApiKeyChange = async () => {
 const $fastBuildButton = document.querySelector<HTMLButtonElement>('#fast-button');
 const $medBuildButton = document.querySelector<HTMLButtonElement>('#med-button');
 const $slowBuildButton = document.querySelector<HTMLButtonElement>('#slow-button');
+const $optimizeCheckbox = document.querySelector<HTMLInputElement>(
+    '#optimize-checkbox'
+);
 
 async function validateToken(token: string): Promise<void> {
     const response = await fetch(
@@ -316,6 +319,7 @@ const handleBuildButton = async (mode: string) => {
         input,
         frameDensity: $frameDensityInput.valueAsNumber,
         mode: mode as 'fast' | 'med' | 'slow',
+        optimize: $optimizeCheckbox.checked,
     });
     const result = await waitForResultWithProgress<BuildHyperlapseResultMessage>(
         MESSAGE_TYPES.BUILD_HYPERLAPSE_RESULT

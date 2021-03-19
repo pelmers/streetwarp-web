@@ -1,9 +1,10 @@
 const path = require('path');
+const nodeExternals = require('webpack-node-externals');
 
 const ROOT = path.resolve(__dirname, 'src');
 const DESTINATION = path.resolve(__dirname, 'dist');
 
-module.exports = {
+const clientConfig = {
     context: ROOT,
 
     mode: process.env.BUILD_MODE || 'development',
@@ -53,3 +54,38 @@ module.exports = {
     devtool: 'cheap-module-source-map',
     devServer: {},
 };
+
+const serverConfig = {
+    context: ROOT,
+
+    mode: process.env.BUILD_MODE || 'development',
+    entry: {
+        server: './server.ts',
+    },
+
+    output: {
+        filename: '[name].bundle.js',
+        path: DESTINATION,
+    },
+
+    resolve: {
+        extensions: ['.ts', '.js'],
+        modules: [ROOT],
+    },
+
+    module: {
+        rules: [
+            {
+                test: /\.ts$/,
+                exclude: [/node_modules/],
+                use: 'ts-loader',
+            },
+        ],
+    },
+
+    devtool: 'cheap-module-source-map',
+    target: 'node',
+    externals: [nodeExternals()],
+};
+
+module.exports = [clientConfig, serverConfig];
