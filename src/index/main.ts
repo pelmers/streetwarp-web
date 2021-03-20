@@ -228,7 +228,7 @@ $fetchMetadataButton.addEventListener('click', async () => {
         frameDensity: $frameDensityInput.valueAsNumber * 1.60934,
     });
     try {
-        const metadataResult = await waitForResult<FetchMetadataResultMessage>(
+        const metadataResult = await waitForResultWithProgress<FetchMetadataResultMessage>(
             MESSAGE_TYPES.FETCH_METADATA_RESULT
         );
         populateStats(metadataResult);

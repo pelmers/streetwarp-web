@@ -116,6 +116,8 @@ function handleProgressConnection(socket: ws, req: IncomingMessage) {
         const client = socketsByKey.get(key);
         if (client) {
             client.send(payload);
+        } else {
+            d(`Received progress for disconnected client ${key}`);
         }
     });
     socket.on(

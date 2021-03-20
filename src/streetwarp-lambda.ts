@@ -63,10 +63,9 @@ async function callLambda(
         );
     }
     if (parsedResponse == null) {
-        throw new Error('Could not parse response');
+        throw new Error(`Could not parse response from ${response.Payload.toString()}`);
     }
     d(`Result status: ${response.StatusCode}`);
-    // d(JSON.stringify(parsedResponse));
     return parsedResponse;
 }
 
@@ -79,12 +78,21 @@ async function fetchMetadata(
         '--api-key',
         params.googleApiKey,
         '--dry-run',
+        '--max-frames',
+        FRAME_LIMIT_PER_VIDEO.toString(),
         '--frames-per-mile',
         msg.frameDensity.toString(),
         '--json',
     ];
-    return (await callLambda(params.key, args, false, msg.input.contents, msg.input.extension))
-        .metadataResult;
+    return (
+        await callLambda(
+            params.key,
+            args,
+            false,
+            msg.input.contents,
+            msg.input.extension
+        )
+    ).metadataResult;
 }
 
 async function buildHyperlapse(
