@@ -60,7 +60,7 @@ let streetwarpBin: string;
 
 async function main() {
     if (helpIndex > 0) {
-        console.log(`Usage: ts-node src/server.ts [--streetwarp-bin=PATH_TO_STREETWARP]
+        console.log(`Usage: node server.bundle.js [--streetwarp-bin=PATH_TO_STREETWARP]
 
 Path to streetwarp is only required if executing it local to the server. For AWS lambda execution,
 provide the environment variables AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_LAMBDA_REGION.
@@ -169,7 +169,7 @@ function handleConnection(socket: io.Socket) {
         d(
             `Client ${socket.id} disconnected, killing ${runningProcesses.length} processes`
         );
-        // If client socket disconnects, cancel any running streetwarp calls
+        // If client socket disconnects, cancel any running streetwarp calls (only applies to local mode, not Lambda)
         for (const proc of runningProcesses) {
             proc.kill('SIGKILL');
         }
@@ -250,8 +250,6 @@ function handleConnection(socket: io.Socket) {
     }
 
     async function handleRwgpsLoadRoute(msg: LoadRWGPSRouteMessage) {
-        // use gpxparser to parse gpx file
-        // ex. url https://ridewithgps.com/routes/34667080.gpx?sub_format=track
         try {
             const response = await fetch(
                 `https://ridewithgps.com/routes/${msg.id}.gpx?sub_format=track`

@@ -8,7 +8,6 @@ import {
 import { createMapFromRoutes, toGeoJson } from '../common/map';
 
 const $video = document.querySelector<HTMLVideoElement>('#video');
-$video.playbackRate = 0.5;
 const parts = window.location.pathname.split('/').filter((p) => p.length > 0);
 const key = parts[parts.length - 1];
 document
