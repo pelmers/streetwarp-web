@@ -118,7 +118,7 @@ async function buildHyperlapse(
     if (msg.optimize) {
         args.push(
             '--optimizer-arg',
-            JSON.stringify({ ratio_test: 0.75, n_features: 360, velocity_factor: 100 })
+            JSON.stringify({ ratio_test: 0.71, n_features: 350, velocity_factor: 111 })
         );
     }
     const result = await callLambda(
