@@ -58,7 +58,7 @@ const clientConfig = {
 const serverConfig = {
     context: ROOT,
     node: {
-        __filename: true
+        __filename: true,
     },
 
     mode: process.env.BUILD_MODE || 'development',

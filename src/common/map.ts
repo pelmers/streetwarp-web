@@ -6,7 +6,45 @@ export function toGeoJson(point: { lat: number; lng: number }): [number, number]
 }
 
 function findCenter(metadata: FetchMetadataResultMessage): [number, number] {
-    return toGeoJson(metadata.gpsPoints[0]);
+    const n = metadata.gpsPoints.length;
+    const avg = metadata.gpsPoints.reduce(
+        (prev, cur) => ({
+            lat: prev.lat + cur.lat / n,
+            lng: prev.lng + cur.lng / n,
+        }),
+        { lat: 0, lng: 0 }
+    );
+    return toGeoJson(avg);
+}
+
+function findBounds(metadata: FetchMetadataResultMessage): mapboxgl.LngLatBoundsLike {
+    const [sw, ne] = metadata.gpsPoints.reduce(
+        ([sw, ne], cur) => [
+            {
+                lat: Math.min(cur.lat, sw.lat),
+                lng: Math.min(cur.lng, sw.lng),
+            },
+            { lat: Math.max(cur.lat, ne.lat), lng: Math.max(cur.lng, ne.lng) },
+        ],
+        [
+            { lat: Number.MAX_SAFE_INTEGER, lng: Number.MAX_SAFE_INTEGER },
+            { lat: Number.MIN_SAFE_INTEGER, lng: Number.MIN_SAFE_INTEGER },
+        ]
+    );
+    // Add padding to every side
+    const pad = 0.15;
+    const x = (ne.lat - sw.lat) * pad;
+    const y = (ne.lng - sw.lng) * pad;
+    return [
+        {
+            lat: sw.lat - x,
+            lng: sw.lng - y,
+        },
+        {
+            lat: ne.lat + x,
+            lng: ne.lng + y,
+        },
+    ];
 }
 
 export async function createMapFromRoutes(
@@ -15,10 +53,11 @@ export async function createMapFromRoutes(
 ): Promise<mapboxgl.Map> {
     const map = new mapboxgl.Map({
         container,
-        zoom: 11,
+        zoom: 10,
         center: findCenter(metadata),
         style: 'mapbox://styles/mapbox/outdoors-v11',
     });
+    map.fitBounds(findBounds(metadata));
     const addSource = (
         id: string,
         points: { lat: number; lng: number }[],

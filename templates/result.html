@@ -1,47 +1,62 @@
 <!DOCTYPE html>
 
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Streetwarp Result</title>
-    <meta name="description" content="">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/vendor/sakura.css" />
-    <link rel="stylesheet" href="/static/result.css">
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8YH10VVH20"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <title>Streetwarp Result</title>
+        <meta name="description" content="" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link
+            href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="/static/vendor/sakura.css" />
+        <link rel="stylesheet" href="/static/result.css" />
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script
+            async
+            src="https://www.googletagmanager.com/gtag/js?id=G-8YH10VVH20"
+        ></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() {
+                dataLayer.push(arguments);
+            }
+            gtag('js', new Date());
 
-        gtag('config', 'G-8YH10VVH20');
-    </script>
-</head>
+            gtag('config', 'G-8YH10VVH20');
+        </script>
+    </head>
 
-<body>
-    <img id="logo" src="/static/logo.png" alt="StreetWarp Web"></img>
-    <div id='container'>
-        <video id="video" width="640" height="480" controls preload="metadata"></video>
-        <div id="map-container"></div>
-    </div>
-    <ul>
-        <li>Playback speed:
-            <button class="dropbtn">1x</button>
-            <div class="dropdown-content">
-                <p>0.25x</p>
-                <p>0.33x</p>
-                <p>0.5x</p>
-                <p>1x</p>
-                <p>2x</p>
-                <p>3x</p>
-            </div>
-        </li>
-        <li> Gray line = GPS track, (thicker) Blue line = Streetview track</li>
-    </ul>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="/dist/result.bundle.js" async defer></script>
-</body>
-
+    <body>
+        <img id="logo" src="/static/logo.png" alt="StreetWarp Web" />
+        <div id="container">
+            <video
+                id="video"
+                width="640"
+                height="480"
+                controls
+                preload="metadata"
+            ></video>
+            <div id="map-container"></div>
+        </div>
+        <ul>
+            <li>
+                Playback speed:
+                <button class="dropbtn">1x</button>
+                <div class="dropdown-content">
+                    <p>0.25x</p>
+                    <p>0.33x</p>
+                    <p>0.5x</p>
+                    <p>1x</p>
+                    <p>2x</p>
+                    <p>3x</p>
+                </div>
+            </li>
+            <li>Gray line = GPS track, (thicker) Blue line = Streetview track</li>
+        </ul>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="/dist/result.bundle.js" async defer></script>
+    </body>
 </html>
