@@ -4,7 +4,7 @@
     "description": "Streetwarp web, use latest version of streetwarp-cli",
     "main": "src/server.ts",
     "scripts": {
-        "build": "webpack --config webpack.config.js --mode production",
+        "build": "webpack --config webpack.config.js",
         "watch": "webpack --config webpack.config.js --watch",
         "serve": "yarn build && node dist/server.bundle.js",
         "format": "node_modules/.bin/prettier --ignore-path .gitignore --write '.'"
