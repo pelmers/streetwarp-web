@@ -1,18 +1,3 @@
-#container {
-    display: flex;
-    margin-bottom: 1em;
-}
-
-#video {
-    max-width: 640px;
-    flex: 1;
-    padding-right: 20px;
-}
-
-#map-container {
-    flex: 1;
-}
-
 #logo {
     max-height: 4em;
     margin-top: 1rem;
@@ -26,7 +11,7 @@
 body {
     background-color: #f9f9f9;
     max-width: 100vw !important;
-    padding: 13px !important;
+    padding: 13px;
 }
 
 /* Dropdown Button */
@@ -68,4 +53,40 @@ body {
     background-color: #ddd;
 }
 
-/* TODO stack the things if screen is narrow: https://stackoverflow.com/questions/37218224/how-to-wrap-items-in-flexbox-for-smaller-screens */
+#container {
+    display: flex;
+    margin-bottom: 1em;
+}
+
+#video {
+    width: 640px;
+    max-width: calc(50% - 20px);
+    flex: 1;
+    padding-right: 20px;
+}
+
+#map-container {
+    flex: 1;
+    min-height: 480px;
+}
+
+/* Stack the containers if screen is narrow */
+@media only screen and (max-width: 1000px) {
+    #container {
+        flex-direction: column;
+    }
+
+    #video {
+        max-width: 100vw;
+        padding: 0px;
+    }
+
+    #map-container {
+        width: 100vw;
+        padding: 0px;
+    }
+    body {
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+}

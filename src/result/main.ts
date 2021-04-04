@@ -16,15 +16,20 @@ document
 let showDrop = false;
 const $dropContent = document.querySelector<HTMLDivElement>('.dropdown-content');
 const $dropBtn = document.querySelector<HTMLButtonElement>('.dropbtn');
-$dropContent.querySelectorAll<HTMLParagraphElement>('p').forEach((e) => {
-    e.addEventListener('click', () => {
-        const val = Number.parseFloat(e.textContent.slice(0, e.textContent.length - 1));
-        $video.playbackRate = val;
-        showDrop = false;
-        $dropContent.style.display = 'none';
-        $dropBtn.textContent = e.textContent;
-    });
-});
+function setPlaybackSpeed(p: HTMLParagraphElement) {
+    const val = Number.parseFloat(p.textContent.slice(0, p.textContent.length - 1));
+    $video.playbackRate = val;
+    showDrop = false;
+    $dropContent.style.display = 'none';
+    $dropBtn.textContent = p.textContent;
+}
+$dropContent
+    .querySelectorAll<HTMLParagraphElement>('p')
+    .forEach((e) => e.addEventListener('click', () => setPlaybackSpeed(e)));
+// Preset playback rate to the slowest available to reduce dizziness...
+$video.addEventListener('loadeddata', () =>
+    setPlaybackSpeed($dropContent.querySelector<HTMLParagraphElement>('p'))
+);
 $dropBtn.addEventListener('click', () => {
     if (!showDrop) {
         $dropContent.style.display = 'block';
