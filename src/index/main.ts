@@ -18,6 +18,8 @@ import {
 } from './steps';
 import { getStravaResult, loadStravaActivity } from './strava';
 
+declare const plausible: any;
+
 async function waitForResultWithProgress<T>(type: MESSAGE_TYPES): Promise<T> {
     try {
         return await waitForResult<T>(
@@ -115,6 +117,7 @@ $stravaActivityButton.addEventListener('click', async () => {
         $stravaActivityButton.style.display = 'none';
         $stravaActivityInput.style.display = 'none';
         showNextStep();
+        plausible('loaded-activity', { props: { type: 'strava' } });
     } catch (e) {
         setError((e as Error).message);
     } finally {
@@ -156,6 +159,7 @@ $rwgpsActivityButton.addEventListener('click', async () => {
         $rwgpsActivityButton.style.display = 'none';
         $rwgpsActivityInput.style.display = 'none';
         showNextStep();
+        plausible('loaded-activity', { props: { type: 'rwgps' } });
     } catch (e) {
         setError((e as Error).message);
     } finally {
@@ -185,6 +189,7 @@ let gpxContents: Promise<string>;
 function handleFiles(files: FileList) {
     const file = files[0];
     showNextStep(); // fetch-metadata
+    plausible('loaded-activity', { props: { type: 'upload' } });
     // @ts-ignore text does exist on file api
     gpxContents = file.text();
     const mb = file.size / 1000000;
@@ -233,14 +238,18 @@ $fetchMetadataButton.addEventListener('click', async () => {
         );
         populateStats(metadataResult);
         showNextStep();
+        plausible('fetched-metadata');
         document.querySelector<HTMLDivElement>('#api-notes').style.display = 'block';
         showNextStep();
     } catch (e) {
-        setError((e as Error).message);
+        const { message } = e as Error;
+        plausible('fetched-metadata-error', { props: { message } });
+        setError(message);
     } finally {
         hideLoader();
     }
     await waitForNextApiKeyChange();
+    plausible('got-api-key');
     if (currentStepIndex() === 3) {
         showNextStep();
     }
@@ -328,6 +337,7 @@ const handleBuildButton = async (mode: string) => {
     if (result != null) {
         // STEP 6: SHOW RESULTS
         document.querySelector<HTMLAnchorElement>('#result-anchor').href = result.url;
+        plausible('hyperlapse-result', { props: mode });
         showNextStep();
     }
 };
