@@ -15,7 +15,7 @@ body {
 }
 
 /* Dropdown Button */
-.dropbtn {
+button {
     font-size: 1.3em;
     border: none;
     cursor: pointer;

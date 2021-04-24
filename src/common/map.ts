@@ -5,7 +5,32 @@ export function toGeoJson(point: { lat: number; lng: number }): [number, number]
     return [point.lng, point.lat];
 }
 
-function findCenter(metadata: FetchMetadataResultMessage): [number, number] {
+export function toGeoJsonFeature(point: { lat: number; lng: number }) {
+    return {
+        type: 'Feature' as const,
+        geometry: {
+            type: 'Point' as const,
+            coordinates: toGeoJson(point),
+        },
+        properties: {},
+    };
+}
+
+export function toGeoJsonLineString(
+    from: { lat: number; lng: number },
+    to: { lat: number; lng: number }
+) {
+    return {
+        type: 'Feature' as const,
+        geometry: {
+            type: 'LineString' as const,
+            coordinates: [toGeoJson(from), toGeoJson(to)],
+        },
+        properties: {},
+    };
+}
+
+export function findCenter(metadata: FetchMetadataResultMessage): [number, number] {
     const n = metadata.gpsPoints.length;
     const avg = metadata.gpsPoints.reduce(
         (prev, cur) => ({
@@ -54,6 +79,7 @@ export async function createMapFromRoutes(
     const map = new mapboxgl.Map({
         container,
         zoom: 10,
+        pitch: 20,
         center: findCenter(metadata),
         style: 'mapbox://styles/mapbox/outdoors-v11',
     });
