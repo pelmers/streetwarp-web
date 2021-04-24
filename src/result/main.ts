@@ -180,7 +180,9 @@ document
             map.easeTo({
                 zoom: 16,
                 pitch: 60,
-                center: toGeoJson(metadata.gpsPoints[getCurrentFrame()]),
+                center: toGeoJson(
+                    metadata.gpsPoints[Math.max(0, getCurrentFrame() - 1)]
+                ),
             });
         } else {
             map.easeTo({
