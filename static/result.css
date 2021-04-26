@@ -90,3 +90,17 @@ button {
         padding-right: 0px;
     }
 }
+
+#footer {
+    border: 0 solid #2c8898;
+    border-color: rgb(213, 214, 216);
+    border-top-width: 2px;
+    margin-top: 1.2em;
+    display: flex;
+    flex-wrap: wrap;
+    padding-left: 1em;
+}
+
+#footer a {
+    margin-right: 2em;
+}
