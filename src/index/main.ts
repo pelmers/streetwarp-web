@@ -297,12 +297,13 @@ async function validateToken(token: string): Promise<void> {
         `https://maps.googleapis.com/maps/api/streetview?size=400x400&location=47.5763831,-122.4211769&fov=80&heading=70&pitch=0&key=${token}`
     );
     if (response.status !== 200) {
+        const message = await response.text();
+        plausible('token-validation-error', { props: { message } });
         throw new Error(
-            `Access key validation failed: ${response.status} - ${
-                response.statusText
-            }, ${await response.text()}`
+            `Access key validation failed: ${response.status} - ${response.statusText}, ${message}`
         );
     }
+    plausible('token-validated');
 }
 
 const handleBuildButton = async (mode: string) => {
