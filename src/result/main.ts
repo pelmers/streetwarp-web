@@ -65,7 +65,9 @@ async function getExistingMetadata(): Promise<FetchMetadataResultMessage> {
 
 let map: mapboxgl.Map | undefined;
 let metadata: FetchMetadataResultMessage | undefined;
-$video.src = new URLSearchParams(window.location.search).get('src');
+const defaultSrc = `https://streetwarpvideo.azureedge.net/output/${key}.mp4`;
+const urlParamSrc = new URLSearchParams(window.location.search).get('src');
+$video.src = urlParamSrc != null && urlParamSrc.length > 0 ? urlParamSrc : defaultSrc;
 
 const getCurrentFrame = () =>
     Math.floor(($video.currentTime / $video.duration) * metadata.gpsPoints.length);

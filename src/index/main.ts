@@ -1,4 +1,5 @@
 import { send, waitForResult } from '../common/socket-client';
+import { FRAME_LIMIT_PER_VIDEO } from '../constants';
 import {
     MESSAGE_TYPES,
     FetchMetadataResultMessage,
@@ -266,6 +267,9 @@ function populateStats(metadataResult: FetchMetadataResultMessage) {
         2
     )} m</b></li>
     `;
+    if (frames >= FRAME_LIMIT_PER_VIDEO) {
+        $gpxStatsList.innerHTML += `<li>Warning: result only uses first ${FRAME_LIMIT_PER_VIDEO} images to avoid runtime limits</li>`;
+    }
     $costEstimateText.innerText = `$${(frames * 0.007).toFixed(2)}`;
 }
 

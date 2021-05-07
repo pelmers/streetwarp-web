@@ -7,4 +7,4 @@ export const d = useDebug
     ? (...args: unknown[]) => console.log(...args)
     : (..._unused: unknown[]) => {};
 
-export const FRAME_LIMIT_PER_VIDEO = 3000;
+export const FRAME_LIMIT_PER_VIDEO = 4000;
