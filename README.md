@@ -1,4 +1,5 @@
 # Streetwarp Web
+[![Logo](static/logo.png)](https://streetwarp.ml/)
 
 ## Website: [streetwarp.ml](https://streetwarp.ml)
 

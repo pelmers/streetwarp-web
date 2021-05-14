@@ -57,7 +57,9 @@
                 <button id="strava-activity-button">Submit</button>
 
                 <div id="rwgps-error">Strava Error message</div>
-                <h4 id="rwgps-activity-text">Enter Ride With GPS route URL:</h4>
+                <h4 id="rwgps-activity-text">
+                    Enter Ride With GPS route URL (must be public):
+                </h4>
                 <input
                     type="text"
                     id="rwgps-activity-input"
@@ -102,6 +104,7 @@
             </li>
             <li>
                 <h4>Enter Google API key</h4>
+                (<a style="font-size: 0.8em" href="#why-key">why am I asking?</a>)
                 (<a style="font-size: 0.8em" href="#disclaimer">disclaimer</a>)
                 <br />
                 Not sure what this means? see
@@ -176,6 +179,17 @@
                         >
                     </li>
                 </ol>
+            </div>
+            <div id="why-key">
+                <i>Why am I asking for your API key?</i>
+                <ul>
+                    <li>
+                        It's simply because the Streetview API is <a
+                            href="https://developers.google.com/maps/billing/gmp-billing#static-street-view">very
+                            expensive</a>. This program easily downloads
+                        thousands of images to turn the route into a video, which I can't afford to maintain on my own.
+                    </li>
+                </ul>
             </div>
             <div id="disclaimer">
                 <i>Disclaimer:</i>

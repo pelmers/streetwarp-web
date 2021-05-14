@@ -100,6 +100,7 @@ async function buildHyperlapse(
     params: EntryParams,
     onMetadata: (metadata: MetadataResult) => unknown
 ): Promise<string> {
+    // TODO let long routes be processed in parallel and join each video part later
     const { mode } = msg;
     const minterp = mode === 'fast' ? 'skip' : mode === 'med' ? 'fast' : 'good';
     const args = [
