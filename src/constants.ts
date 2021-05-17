@@ -8,3 +8,6 @@ export const d = useDebug
     : (..._unused: unknown[]) => {};
 
 export const FRAME_LIMIT_PER_VIDEO = 4000;
+
+export const SERVER_CALLS_BROWSER = 'scb';
+export const BROWSER_CALLS_SERVER = 'bcs';

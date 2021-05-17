@@ -1,10 +1,5 @@
-import { FetchMetadataResultMessage, MESSAGE_TYPES } from '../messages';
 import mapboxgl from 'mapbox-gl';
-import {
-    getMapboxKey as getMapboxToken,
-    send,
-    waitForResult,
-} from '../common/socket-client';
+import { fetchExistingMetadata, getMapboxKey } from '../common/socket-client';
 import {
     createMapFromRoutes,
     findCenter,
@@ -13,6 +8,7 @@ import {
     toGeoJsonLineString,
 } from '../common/map';
 import * as turf from '@turf/turf';
+import { TFetchMetadataOutput } from '../rpcCalls';
 
 const clamp = (num: number, lo: number, hi: number) =>
     num < lo ? lo : num > hi ? hi : num;
@@ -56,15 +52,8 @@ $dropBtn.addEventListener('click', (e) => {
     showDrop = !showDrop;
 });
 
-async function getExistingMetadata(): Promise<FetchMetadataResultMessage> {
-    send({ type: MESSAGE_TYPES.FETCH_EXISTING_METADATA, key });
-    return waitForResult<FetchMetadataResultMessage>(
-        MESSAGE_TYPES.FETCH_METADATA_RESULT
-    );
-}
-
 let map: mapboxgl.Map | undefined;
-let metadata: FetchMetadataResultMessage | undefined;
+let metadata: TFetchMetadataOutput | undefined;
 const defaultSrc = `https://streetwarpvideo.azureedge.net/output/${key}.mp4`;
 const urlParamSrc = new URLSearchParams(window.location.search).get('src');
 $video.src = urlParamSrc != null && urlParamSrc.length > 0 ? urlParamSrc : defaultSrc;
@@ -77,7 +66,7 @@ const getFrameRate = () =>
     Math.round(($video.playbackRate * metadata.gpsPoints.length) / $video.duration);
 
 // TODO show error if these fetches fail
-Promise.all([getMapboxToken(), getExistingMetadata()]).then(
+Promise.all([getMapboxKey(), fetchExistingMetadata({ key })]).then(
     async ([token, metadataResult]) => {
         // @ts-ignore gotta assign it once
         mapboxgl.accessToken = token;

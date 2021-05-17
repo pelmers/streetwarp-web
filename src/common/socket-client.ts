@@ -1,52 +1,16 @@
-import {
-    MESSAGE_TYPES,
-    Message,
-    GetMapboxKeyResultMessage,
-    ProgressMessage,
-    ProgressStageMessage,
-} from '../messages';
+import { RpcClient, RpcServer, SocketTransport } from 'roots-rpc';
+import { BROWSER_CALLS_SERVER, SERVER_CALLS_BROWSER } from '../constants';
+import { ServerCalls } from '../rpcCalls';
 
-export const socket = io();
+const socket = io();
 
-export const send = (msg: Message) => socket.send(msg);
+export const client = new RpcClient(new SocketTransport(socket, BROWSER_CALLS_SERVER));
+export const server = new RpcServer(new SocketTransport(socket, SERVER_CALLS_BROWSER));
 
-export async function waitForResult<T>(
-    type: MESSAGE_TYPES,
-    onProgress?: (msg: ProgressMessage) => void,
-    onProgressStage?: (msg: ProgressStageMessage) => void
-): Promise<T> {
-    let listener;
-    const promise = new Promise<Message>((resolve, reject) => {
-        listener = (data: Message) => {
-            if (data.type === type) {
-                resolve(data);
-            } else if (data.type === MESSAGE_TYPES.ERROR) {
-                reject(new Error(data.error));
-            } else if (onProgress != null && data.type === MESSAGE_TYPES.PROGRESS) {
-                onProgress(data);
-            } else if (
-                onProgressStage != null &&
-                data.type === MESSAGE_TYPES.PROGRESS_STAGE
-            ) {
-                onProgressStage(data);
-            }
-        };
-        socket.on('message', listener);
-    });
-    try {
-        await promise;
-    } finally {
-        socket.off('message', listener);
-    }
-    // @ts-ignore assume the user has typed this correctly
-    return promise;
-}
-
-export async function getMapboxKey() {
-    send({ type: MESSAGE_TYPES.GET_MAPBOX_KEY });
-    return (
-        await waitForResult<GetMapboxKeyResultMessage>(
-            MESSAGE_TYPES.GET_MAPBOX_KEY_RESULT
-        )
-    ).key;
-}
+export const fetchMetadata = client.connect(ServerCalls.FetchMetadata);
+export const fetchExistingMetadata = client.connect(ServerCalls.FetchExistingMetadata);
+export const getStravaStatus = client.connect(ServerCalls.GetStravaStatus);
+export const loadStravaActivity = client.connect(ServerCalls.LoadStravaActivity);
+export const loadRWGPSRoute = client.connect(ServerCalls.LoadRWGPSRoute);
+export const getMapboxKey = client.connect(ServerCalls.GetMapboxKey);
+export const buildHyperlapse = client.connect(ServerCalls.BuildHyperlapse);

@@ -5,12 +5,10 @@ import util from 'util';
 import mkdirp from 'mkdirp';
 import rimraf from 'rimraf';
 import {
-    BuildHyperlapseMessage,
-    FetchMetadataMessage,
-    FetchMetadataResultMessage,
-    Message,
-    MESSAGE_TYPES,
-} from './messages';
+    TBuildHyperlapseInput,
+    TFetchMetadataInput,
+    TFetchMetadataOutput,
+} from './rpcCalls';
 import child_process from 'child_process';
 import readline from 'readline';
 import { d, FRAME_LIMIT_PER_VIDEO, r } from './constants';
@@ -40,14 +38,14 @@ type EntryParams = {
     key: string;
     googleApiKey: string;
     onProcess: (proc: child_process.ChildProcess) => void;
-    onProgress: (msg: Message) => void;
+    onProgress: (msg: unknown) => void;
     onMessage?: (arg0: Object) => void;
 };
 
 async function fetchMetadata(
-    msg: FetchMetadataMessage,
+    msg: TFetchMetadataInput,
     params: EntryParams
-): Promise<FetchMetadataResultMessage> {
+): Promise<TFetchMetadataOutput> {
     const { frameDensity, input } = msg;
     const { contents, extension } = input;
     const { key, googleApiKey } = params;
@@ -75,7 +73,7 @@ async function fetchMetadata(
 }
 
 async function buildHyperlapse(
-    msg: BuildHyperlapseMessage,
+    msg: TBuildHyperlapseInput,
     params: EntryParams
 ): Promise<string> {
     const { frameDensity, input, mode } = msg;
@@ -128,11 +126,8 @@ async function streetwarp(params: EntryParams, args: string[]): Promise<number> 
     rl.on('line', (line) => {
         let msg;
         try {
-            msg = JSON.parse(line) as Message;
-            if (
-                msg.type === MESSAGE_TYPES.PROGRESS ||
-                msg.type === MESSAGE_TYPES.PROGRESS_STAGE
-            ) {
+            msg = JSON.parse(line);
+            if (msg.type === 'PROGRESS' || msg.type === 'PROGRESS_STAGE') {
                 onProgress(msg);
             } else {
                 onMessage(msg);

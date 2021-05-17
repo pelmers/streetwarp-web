@@ -1,55 +1,38 @@
-import { send, waitForResult } from '../common/socket-client';
-import {
-    MESSAGE_TYPES,
-    GetStravaStatusResultMessage,
-    LoadStravaActivityResultMessage,
-} from '../messages';
+import { getStravaStatus, loadStravaActivity } from '../common/socket-client';
+import { TLoadStravaActivityOutput } from '../rpcCalls';
 
 export async function getStravaResult(onError?: (e: Error) => void) {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('code') && params.get('scope')) {
-        send({
-            type: MESSAGE_TYPES.GET_STRAVA_STATUS,
-            response: {
-                code: params.get('code'),
-                acceptedScopes: params.get('scope'),
-            },
-        });
-    } else {
-        send({ type: MESSAGE_TYPES.GET_STRAVA_STATUS });
-    }
     try {
-        return await waitForResult<GetStravaStatusResultMessage>(
-            MESSAGE_TYPES.GET_STRAVA_STATUS_RESULT
-        );
+        if (params.get('code') && params.get('scope')) {
+            return await getStravaStatus({
+                response: {
+                    code: params.get('code'),
+                    acceptedScopes: params.get('scope'),
+                },
+            });
+        } else {
+            return await getStravaStatus({ response: null });
+        }
     } catch (e) {
         onError && onError(e);
     }
-    send({ type: MESSAGE_TYPES.GET_STRAVA_STATUS });
-    return await waitForResult<GetStravaStatusResultMessage>(
-        MESSAGE_TYPES.GET_STRAVA_STATUS_RESULT
-    );
+    return getStravaStatus({ response: null });
 }
 
-export async function loadStravaActivity(
+export async function loadActivity(
     value: string,
     stravaAccessToken: string
-): Promise<LoadStravaActivityResultMessage> {
+): Promise<TLoadStravaActivityOutput> {
     const idRegex = /\/(\d+)/;
-    try {
-        const match = idRegex.exec(value)[1];
-        const isRoute = value.indexOf('route') >= 0;
-        if (!match) {
-            throw new Error('no match for id in URL');
-        }
-        send({
-            type: MESSAGE_TYPES.LOAD_STRAVA_ACTIVITY,
-            t: isRoute ? 'route' : 'activity',
-            id: Number.parseInt(match),
-            token: stravaAccessToken,
-        });
-    } catch (e) {
-        throw new Error(`Could not parse activity id: ${e.message}`);
+    const match = idRegex.exec(value)[1];
+    const isRoute = value.indexOf('route') >= 0;
+    if (!match) {
+        throw new Error('no match for id in URL');
     }
-    return waitForResult(MESSAGE_TYPES.LOAD_STRAVA_ACTIVITY_RESULT);
+    return loadStravaActivity({
+        t: isRoute ? 'route' : 'activity',
+        id: Number.parseInt(match),
+        token: stravaAccessToken,
+    });
 }

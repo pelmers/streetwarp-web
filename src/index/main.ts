@@ -1,11 +1,7 @@
-import { send, waitForResult } from '../common/socket-client';
+import { buildHyperlapse, fetchMetadata, server } from '../common/socket-client';
 import { FRAME_LIMIT_PER_VIDEO } from '../constants';
-import {
-    MESSAGE_TYPES,
-    FetchMetadataResultMessage,
-    BuildHyperlapseResultMessage,
-} from '../messages';
-import { loadRWGPSRoute } from './rwgps';
+import { ClientCalls, TFetchMetadataOutput } from '../rpcCalls';
+import { loadRoute } from './rwgps';
 import {
     setLoadingText,
     setLoadingStage,
@@ -17,21 +13,34 @@ import {
     currentStepIndex,
     setError,
 } from './steps';
-import { getStravaResult, loadStravaActivity } from './strava';
+import { getStravaResult, loadActivity } from './strava';
 
 declare const plausible: any;
 
-async function waitForResultWithProgress<T>(type: MESSAGE_TYPES): Promise<T> {
+async function withProgress<O>(f: () => Promise<O>): Promise<O> {
+    const disposable = server.register(ClientCalls.ReceiveProgress, async (msg) => {
+        if (msg.type === 'PROGRESS') {
+            setLoadingText(msg.message);
+        } else {
+            setLoadingStage(msg.stage);
+        }
+        return null;
+    });
     try {
-        return await waitForResult<T>(
-            type,
-            ({ message }) => setLoadingText(message),
-            ({ stage }) => setLoadingStage(stage)
-        );
+        return await f();
+    } finally {
+        disposable.dispose();
+    }
+}
+
+async function catchWithProgress<O>(f: () => Promise<O>): Promise<O> {
+    try {
+        return await withProgress(f);
     } catch (e) {
         setError((e as Error).message);
     }
 }
+
 const $exampleLink = document.querySelector<HTMLAnchorElement>('#example');
 let exampleClicked = false;
 let exampleText = $exampleLink.textContent;
@@ -106,24 +115,18 @@ $stravaActivityButton.addEventListener('click', async () => {
     hideStepsAfter(0);
     setLoadingStage('Loading Activity');
     showLoader();
-    try {
-        const { name, km, points } = await loadStravaActivity(
-            $stravaActivityInput.value,
-            stravaAccessToken
-        );
-        jsonContents = points;
-        document.querySelector<HTMLHeadingElement>(
-            '#strava-activity-text'
-        ).textContent = `${name}: ${km.toFixed(2)} km`;
-        $stravaActivityButton.style.display = 'none';
-        $stravaActivityInput.style.display = 'none';
-        showNextStep();
-        plausible('loaded-activity', { props: { type: 'strava' } });
-    } catch (e) {
-        setError((e as Error).message);
-    } finally {
-        hideLoader();
-    }
+    const { name, km, points } = await catchWithProgress(() =>
+        loadActivity($stravaActivityInput.value, stravaAccessToken)
+    );
+    jsonContents = points;
+    document.querySelector<HTMLHeadingElement>(
+        '#strava-activity-text'
+    ).textContent = `${name}: ${km.toFixed(2)} km`;
+    $stravaActivityButton.style.display = 'none';
+    $stravaActivityInput.style.display = 'none';
+    showNextStep();
+    plausible('loaded-activity', { props: { type: 'strava' } });
+    hideLoader();
 });
 
 const $rwgpsActivityInput = document.querySelector<HTMLInputElement>(
@@ -152,7 +155,7 @@ $rwgpsActivityButton.addEventListener('click', async () => {
     setLoadingStage('Loading Route');
     showLoader();
     try {
-        const { name, km, points } = await loadRWGPSRoute($rwgpsActivityInput.value);
+        const { name, km, points } = await loadRoute($rwgpsActivityInput.value);
         jsonContents = points;
         document.querySelector<HTMLHeadingElement>(
             '#rwgps-activity-text'
@@ -227,15 +230,13 @@ $fetchMetadataButton.addEventListener('click', async () => {
         jsonContents != null
             ? { contents: jsonContents, extension: 'json' as const }
             : { contents: await gpxContents, extension: 'gpx' as const };
-    send({
-        type: MESSAGE_TYPES.FETCH_METADATA,
-        input,
-        // Kilometers to miles
-        frameDensity: $frameDensityInput.valueAsNumber * 1.60934,
-    });
     try {
-        const metadataResult = await waitForResultWithProgress<FetchMetadataResultMessage>(
-            MESSAGE_TYPES.FETCH_METADATA_RESULT
+        const metadataResult = await withProgress(() =>
+            fetchMetadata({
+                input,
+                // Kilometers to miles
+                frameDensity: $frameDensityInput.valueAsNumber * 1.60934,
+            })
         );
         populateStats(metadataResult);
         showNextStep();
@@ -258,7 +259,7 @@ $fetchMetadataButton.addEventListener('click', async () => {
 
 const $gpxStatsList = document.querySelector<HTMLUListElement>('#gpx-stats');
 const $costEstimateText = document.querySelector<HTMLSpanElement>('#cost-estimate');
-function populateStats(metadataResult: FetchMetadataResultMessage) {
+function populateStats(metadataResult: TFetchMetadataOutput) {
     const { frames, distance, averageError } = metadataResult;
     $gpxStatsList.innerHTML = `
     <li>Total distance: <b>${(distance / 1000).toFixed(2)} km</b></li>
@@ -327,16 +328,14 @@ const handleBuildButton = async (mode: string) => {
         jsonContents != null
             ? { contents: jsonContents, extension: 'json' as const }
             : { contents: await gpxContents, extension: 'gpx' as const };
-    send({
-        type: MESSAGE_TYPES.BUILD_HYPERLAPSE,
-        apiKey,
-        input,
-        frameDensity: $frameDensityInput.valueAsNumber,
-        mode: mode as 'fast' | 'med' | 'slow',
-        optimize: $optimizeCheckbox.checked,
-    });
-    const result = await waitForResultWithProgress<BuildHyperlapseResultMessage>(
-        MESSAGE_TYPES.BUILD_HYPERLAPSE_RESULT
+    const result = await catchWithProgress(() =>
+        buildHyperlapse({
+            apiKey,
+            input,
+            frameDensity: $frameDensityInput.valueAsNumber,
+            mode: mode as 'fast' | 'med' | 'slow',
+            optimize: $optimizeCheckbox.checked,
+        })
     );
     hideLoader();
     if (result != null) {

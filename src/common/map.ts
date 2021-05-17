@@ -1,5 +1,5 @@
 import mapboxgl from 'mapbox-gl';
-import { FetchMetadataResultMessage } from '../messages';
+import { TFetchMetadataOutput } from '../rpcCalls';
 
 export function toGeoJson(point: { lat: number; lng: number }): [number, number] {
     return [point.lng, point.lat];
@@ -30,7 +30,7 @@ export function toGeoJsonLineString(
     };
 }
 
-export function findCenter(metadata: FetchMetadataResultMessage): [number, number] {
+export function findCenter(metadata: TFetchMetadataOutput): [number, number] {
     const n = metadata.gpsPoints.length;
     const avg = metadata.gpsPoints.reduce(
         (prev, cur) => ({
@@ -42,7 +42,7 @@ export function findCenter(metadata: FetchMetadataResultMessage): [number, numbe
     return toGeoJson(avg);
 }
 
-function findBounds(metadata: FetchMetadataResultMessage): mapboxgl.LngLatBoundsLike {
+function findBounds(metadata: TFetchMetadataOutput): mapboxgl.LngLatBoundsLike {
     const [sw, ne] = metadata.gpsPoints.reduce(
         ([sw, ne], cur) => [
             {
@@ -74,7 +74,7 @@ function findBounds(metadata: FetchMetadataResultMessage): mapboxgl.LngLatBounds
 
 export async function createMapFromRoutes(
     container: string,
-    metadata: FetchMetadataResultMessage
+    metadata: TFetchMetadataOutput
 ): Promise<mapboxgl.Map> {
     const map = new mapboxgl.Map({
         container,

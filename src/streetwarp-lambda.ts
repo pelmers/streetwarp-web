@@ -1,10 +1,10 @@
 import util from 'util';
 import { d, FRAME_LIMIT_PER_VIDEO } from './constants';
 import {
-    FetchMetadataMessage,
-    BuildHyperlapseMessage,
-    MetadataResult,
-} from './messages';
+    TBuildHyperlapseInput,
+    TFetchMetadataInput,
+    TFetchMetadataOutput,
+} from './rpcCalls';
 
 import aws from 'aws-sdk';
 
@@ -32,7 +32,7 @@ async function callLambda(
     contents: string,
     extension: 'gpx' | 'json'
 ): Promise<{
-    metadataResult: MetadataResult;
+    metadataResult: TFetchMetadataOutput;
     videoResult: { url: string } | undefined;
 }> {
     const client = new aws.Lambda();
@@ -70,9 +70,9 @@ async function callLambda(
 }
 
 async function fetchMetadata(
-    msg: FetchMetadataMessage,
+    msg: TFetchMetadataInput,
     params: EntryParams
-): Promise<MetadataResult> {
+): Promise<TFetchMetadataOutput> {
     const args = [
         '--progress',
         '--api-key',
@@ -96,9 +96,9 @@ async function fetchMetadata(
 }
 
 async function buildHyperlapse(
-    msg: BuildHyperlapseMessage,
+    msg: TBuildHyperlapseInput,
     params: EntryParams,
-    onMetadata: (metadata: MetadataResult) => unknown
+    onMetadata: (metadata: TFetchMetadataOutput) => unknown
 ): Promise<string> {
     // TODO let long routes be processed in parallel and join each video part later
     const { mode } = msg;

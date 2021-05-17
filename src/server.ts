@@ -12,16 +12,12 @@ import io from 'socket.io';
 import ws from 'ws';
 
 import {
-    BuildHyperlapseMessage,
-    FetchMetadataMessage,
-    GetStravaStatusMessage,
-    LoadRWGPSRouteMessage,
-    LoadStravaActivityMessage,
-    Message,
-    MESSAGE_TYPES,
-    MetadataResult,
-} from './messages';
-import { r, d } from './constants';
+    ServerCalls,
+    ClientCalls,
+    TProgressInput,
+    TFetchMetadataOutput,
+} from './rpcCalls';
+import { r, d, BROWSER_CALLS_SERVER, SERVER_CALLS_BROWSER } from './constants';
 import LocalMethods from './streetwarp-local';
 import LambdaMethods from './streetwarp-lambda';
 // @ts-ignore no types for this api
@@ -30,6 +26,7 @@ import stravaApi from 'strava-v3';
 import gpxParser from 'gpxparser';
 import { IncomingMessage } from 'http';
 import fetch from 'node-fetch';
+import { RpcClient, RpcServer, SocketTransport } from 'roots-rpc';
 
 consoleStamp(console);
 const useLambda =
@@ -102,7 +99,7 @@ Other required environment variables: GOOGLE_API_KEY, MAPBOX_API_KEY
     wss.on('connection', (socket, req) => handleProgressConnection(socket, req));
 }
 
-const socketsByKey = new Map<string, io.Socket>();
+const sendProgressByKey = new Map<string, (i: TProgressInput) => unknown>();
 
 function handleProgressConnection(socket: ws, req: IncomingMessage) {
     const id = uuid.v4();
@@ -113,9 +110,9 @@ function handleProgressConnection(socket: ws, req: IncomingMessage) {
     );
     socket.on('message', async (msg) => {
         const { key, payload } = JSON.parse(msg.toString());
-        const client = socketsByKey.get(key);
-        if (client) {
-            client.send(payload);
+        const sendProgress = sendProgressByKey.get(key);
+        if (sendProgress) {
+            sendProgress(payload);
         } else {
             d(`Received progress for disconnected client ${key}`);
         }
@@ -135,154 +132,17 @@ function handleConnection(socket: io.Socket) {
             socket.request.headers['user-agent']
         )}) connected to ${socket.request.url}`
     );
+
     const runningProcesses: child_process.ChildProcess[] = [];
-    socket.on('message', async (msg: Message) => {
-        d(`${socket.id}: ${msg.type}`);
-        switch (msg.type) {
-            case MESSAGE_TYPES.GET_STRAVA_STATUS:
-                await handleStravaStatus(msg);
-                break;
-            case MESSAGE_TYPES.LOAD_STRAVA_ACTIVITY:
-                await handleStravaLoadActivity(msg);
-                break;
-            case MESSAGE_TYPES.LOAD_RWGPS_ROUTE:
-                await handleRwgpsLoadRoute(msg);
-                break;
-            case MESSAGE_TYPES.FETCH_METADATA:
-                await handleFetchMetadata(msg);
-                break;
-            case MESSAGE_TYPES.FETCH_EXISTING_METADATA:
-                await handleFetchExistingMetadata(msg.key);
-                break;
-            case MESSAGE_TYPES.BUILD_HYPERLAPSE:
-                await buildHyperlapse(msg);
-                break;
-            case MESSAGE_TYPES.GET_MAPBOX_KEY:
-                reply({
-                    type: MESSAGE_TYPES.GET_MAPBOX_KEY_RESULT,
-                    key: mapboxApiKey,
-                });
-                break;
-        }
-    });
-    socket.on('disconnect', () => {
-        d(
-            `Client ${socket.id} disconnected, killing ${runningProcesses.length} processes`
-        );
-        // If client socket disconnects, cancel any running streetwarp calls (only applies to local mode, not Lambda)
-        for (const proc of runningProcesses) {
-            proc.kill('SIGKILL');
-        }
-    });
+    const knownKeys = new Set<string>();
+    const server = new RpcServer(new SocketTransport(socket, BROWSER_CALLS_SERVER));
+    const client = new RpcClient(new SocketTransport(socket, SERVER_CALLS_BROWSER));
+    const sendProgress = client.connect(ClientCalls.ReceiveProgress);
 
-    const reply = (msg: Message) => {
-        socket.send(msg);
-    };
-
-    async function handleStravaStatus(msg: GetStravaStatusMessage) {
-        try {
-            await handleStravaStatusImpl(msg);
-        } catch (e) {
-            console.error(e.message);
-            reply({ type: MESSAGE_TYPES.ERROR, error: (e as Error).message });
-        }
-    }
-
-    async function handleStravaStatusImpl(msg: GetStravaStatusMessage) {
-        if (!msg.response) {
-            reply({
-                type: MESSAGE_TYPES.GET_STRAVA_STATUS_RESULT,
-                result: {
-                    requestURL: await stravaApi.oauth.getRequestAccessURL({
-                        scope: 'read,activity:read,activity:read_all',
-                    }),
-                },
-            });
-        } else {
-            const { code, acceptedScopes } = msg.response;
-            if (acceptedScopes.indexOf('activity') === -1) {
-                throw new Error('App not given permission to read activities');
-            }
-            const stravaResponse = await stravaApi.oauth.getToken(code);
-            reply({
-                type: MESSAGE_TYPES.GET_STRAVA_STATUS_RESULT,
-                result: {
-                    profile: {
-                        token: stravaResponse.access_token,
-                        profileURL: stravaResponse.athlete.profile,
-                        name: stravaResponse.athlete.firstname,
-                    },
-                },
-            });
-        }
-    }
-
-    async function handleStravaLoadActivity(msg: LoadStravaActivityMessage) {
-        try {
-            const { id, token, t } = msg;
-            // @ts-ignore strava api has wrong typings
-            const client = new stravaApi.client(token);
-            if (t === 'activity') {
-                const [activity, streams] = await Promise.all([
-                    client.activities.get({ id }),
-                    client.streams.activity({ id, types: 'latlng' }),
-                ]);
-                const latlngs = (streams as any[]).find(({ type }) => type === 'latlng')
-                    .data;
-                reply({
-                    type: MESSAGE_TYPES.LOAD_STRAVA_ACTIVITY_RESULT,
-                    name: activity.name,
-                    km: activity.distance / 1000,
-                    points: JSON.stringify(
-                        (latlngs as number[][]).map(([lat, lng]) => ({ lat, lng }))
-                    ),
-                });
-            } else {
-                // TODO get route, not in strava node api https://github.com/UnbounDev/node-strava-v3/issues/107
-                throw new Error(
-                    'Routes are not supported yet (see https://github.com/UnbounDev/node-strava-v3/issues/107)'
-                );
-            }
-        } catch (e) {
-            console.error(e.message);
-            reply({ type: MESSAGE_TYPES.ERROR, error: (e as Error).message });
-        }
-    }
-
-    async function handleRwgpsLoadRoute(msg: LoadRWGPSRouteMessage) {
-        try {
-            const response = await fetch(
-                `https://ridewithgps.com/routes/${msg.id}.gpx?sub_format=track`
-            );
-            if (response.status !== 200) {
-                throw new Error(
-                    `Route fetch failed: ${response.status} - ${
-                        response.statusText
-                    }, ${(await response.text()).slice(0, 90)}`
-                );
-            }
-            const gpx = new gpxParser();
-            const gpxContents = await response.text();
-            gpx.parse(gpxContents);
-            const distance = gpx.tracks[0].distance.total;
-            const points = JSON.stringify(
-                gpx.tracks[0].points.map((p: any) => ({ lat: p.lat, lng: p.lon }))
-            );
-            reply({
-                type: MESSAGE_TYPES.LOAD_RWGPS_ROUTE_RESULT,
-                name: gpx.metadata.name,
-                km: distance / 1000,
-                points,
-            });
-        } catch (e) {
-            console.error(e.message);
-            reply({ type: MESSAGE_TYPES.ERROR, error: (e as Error).message });
-        }
-    }
-
-    async function handleFetchMetadata(msg: FetchMetadataMessage) {
+    server.register(ServerCalls.FetchMetadata, async (msg) => {
         const key = uuid.v4().slice(0, 8);
-        socketsByKey.set(key, socket);
+        knownKeys.add(key);
+        sendProgressByKey.set(key, sendProgress);
         try {
             const result = useLambda
                 ? await LambdaMethods.fetchMetadata(msg, {
@@ -293,36 +153,108 @@ function handleConnection(socket: io.Socket) {
                       cmd: streetwarpBin,
                       googleApiKey,
                       key,
-                      onProgress: reply,
+                      onProgress: sendProgress,
                       onProcess: runningProcesses.push.bind(runningProcesses),
                   });
-            reply({
-                type: MESSAGE_TYPES.FETCH_METADATA_RESULT,
-                ...result,
-            });
-        } catch (e) {
-            console.error(e);
-            reply({ type: MESSAGE_TYPES.ERROR, error: (e as Error).message });
+            return result;
         } finally {
-            socketsByKey.delete(key);
+            sendProgressByKey.delete(key);
+            knownKeys.delete(key);
         }
-    }
+    });
 
-    async function handleFetchExistingMetadata(key: string): Promise<void> {
+    server.register(ServerCalls.FetchExistingMetadata, async ({ key }) => {
         d(`Attempt to retrieve metadata for ${key}`);
         const metadataPath = r(`video/${key}.json`);
-        const result = JSON.parse(
-            (await util.promisify(fs.readFile)(metadataPath)).toString()
-        );
-        reply({ type: MESSAGE_TYPES.FETCH_METADATA_RESULT, ...result });
-    }
+        return JSON.parse((await util.promisify(fs.readFile)(metadataPath)).toString());
+    });
 
-    async function buildHyperlapse(msg: BuildHyperlapseMessage) {
+    server.register(ServerCalls.GetStravaStatus, async (msg) => {
+        if (!msg.response) {
+            return {
+                result: {
+                    requestURL: await stravaApi.oauth.getRequestAccessURL({
+                        scope: 'read,activity:read,activity:read_all',
+                    }),
+                },
+            };
+        }
+        const { code, acceptedScopes } = msg.response;
+        if (acceptedScopes.indexOf('activity') === -1) {
+            throw new Error('App not given permission to read activities');
+        }
+        const stravaResponse = await stravaApi.oauth.getToken(code);
+        return {
+            result: {
+                profile: {
+                    token: stravaResponse.access_token,
+                    profileURL: stravaResponse.athlete.profile,
+                    name: stravaResponse.athlete.firstname,
+                },
+            },
+        };
+    });
+
+    server.register(ServerCalls.LoadStravaActivity, async (msg) => {
+        const { id, token, t } = msg;
+        // @ts-ignore strava api has wrong typings
+        const client = new stravaApi.client(token);
+        if (t === 'activity') {
+            const [activity, streams] = await Promise.all([
+                client.activities.get({ id }),
+                client.streams.activity({ id, types: 'latlng' }),
+            ]);
+            const latlngs = (streams as any[]).find(({ type }) => type === 'latlng')
+                .data;
+            return {
+                name: activity.name,
+                km: activity.distance / 1000,
+                points: JSON.stringify(
+                    (latlngs as number[][]).map(([lat, lng]) => ({ lat, lng }))
+                ),
+            };
+        } else {
+            // TODO get route, not in strava node api https://github.com/UnbounDev/node-strava-v3/issues/107
+            throw new Error(
+                'Routes are not supported yet (see https://github.com/UnbounDev/node-strava-v3/issues/107)'
+            );
+        }
+    });
+
+    server.register(ServerCalls.LoadRWGPSRoute, async (msg) => {
+        const response = await fetch(
+            `https://ridewithgps.com/routes/${msg.id}.gpx?sub_format=track`
+        );
+        if (response.status !== 200) {
+            throw new Error(
+                `Route fetch failed: ${response.status} - ${response.statusText}, ${(
+                    await response.text()
+                ).slice(0, 90)}`
+            );
+        }
+        const gpx = new gpxParser();
+        const gpxContents = await response.text();
+        gpx.parse(gpxContents);
+        const distance = gpx.tracks[0].distance.total;
+        const points = JSON.stringify(
+            gpx.tracks[0].points.map((p: any) => ({ lat: p.lat, lng: p.lon }))
+        );
+        return {
+            name: gpx.metadata.name,
+            km: distance / 1000,
+            points,
+        };
+    });
+
+    server.register(ServerCalls.GetMapboxKey, async () => mapboxApiKey);
+
+    server.register(ServerCalls.BuildHyperlapse, async (msg) => {
         const key = uuid.v4().slice(0, 8);
-        socketsByKey.set(key, socket);
+        sendProgressByKey.set(key, sendProgress);
+        knownKeys.add(key);
         try {
             const metadataPath = r(`video/${key}.json`);
-            let metadataResult: MetadataResult;
+            let metadataResult: TFetchMetadataOutput;
             d(
                 `Requesting hyperlapse [${key}], opt=${msg.optimize}, mode=${msg.mode}, density=${msg.frameDensity}`
             );
@@ -336,10 +268,10 @@ function handleConnection(socket: io.Socket) {
                       cmd: streetwarpBin,
                       googleApiKey: msg.apiKey,
                       onProcess: runningProcesses.push.bind(runningProcesses),
-                      onProgress: reply,
+                      onProgress: sendProgress,
                       key,
                       onMessage: (msg) => {
-                          metadataResult = msg as MetadataResult;
+                          metadataResult = msg as TFetchMetadataOutput;
                       },
                   });
             await util.promisify(fs.writeFile)(
@@ -348,14 +280,25 @@ function handleConnection(socket: io.Socket) {
             );
             const url = `/result/${key}/?src=${encodeURIComponent(remoteUrl)}`;
             d(`Returning hyperlapse result: ${url}`);
-            reply({ type: MESSAGE_TYPES.BUILD_HYPERLAPSE_RESULT, url });
-        } catch (e) {
-            console.error(e);
-            reply({ type: MESSAGE_TYPES.ERROR, error: (e as Error).message });
+            return { url };
         } finally {
-            socketsByKey.delete(key);
+            sendProgressByKey.delete(key);
+            knownKeys.delete(key);
         }
-    }
+    });
+
+    socket.on('disconnect', () => {
+        d(
+            `Client ${socket.id} disconnected, killing ${runningProcesses.length} processes`
+        );
+        // If client socket disconnects, cancel any running streetwarp calls (only applies to local mode, not Lambda)
+        for (const proc of runningProcesses) {
+            proc.kill('SIGKILL');
+        }
+        for (const key of knownKeys) {
+            sendProgressByKey.delete(key);
+        }
+    });
 }
 
 main();
