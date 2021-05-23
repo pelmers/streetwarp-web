@@ -1,13 +1,13 @@
-// TODO use my roots-rpc
 import * as t from 'io-ts';
 
-function optional<X extends t.Props>(typ: t.TypeC<X>) {
+function optional<X extends t.Mixed>(typ: X) {
     return t.union([t.null, t.undefined, typ]);
 }
 
 const LatLng = t.type({
     lat: t.number,
     lng: t.number,
+    bearing: optional(t.number),
 });
 const FetchMetadataInput = t.type({
     input: t.type({
@@ -22,7 +22,7 @@ const FetchExistingMetadataInput = t.type({
     key: t.string,
 });
 
-const FetchMetadataOutput = t.type({
+export const FetchMetadataOutput = t.type({
     frames: t.number,
     distance: t.number,
     averageError: t.number,
@@ -107,14 +107,26 @@ export const ServerCalls = {
     }),
 };
 
+export type ProgressPayload =
+    | {
+          type: 'PROGRESS_STAGE';
+          stage: string;
+      }
+    | {
+          type: 'PROGRESS';
+          message: string;
+      };
+
 const ProgressInput = t.union([
     t.type({
         type: t.literal('PROGRESS_STAGE'),
         stage: t.string,
+        index: optional(t.number),
     }),
     t.type({
         type: t.literal('PROGRESS'),
         message: t.string,
+        index: optional(t.number),
     }),
 ]);
 export type TProgressInput = t.TypeOf<typeof ProgressInput>;

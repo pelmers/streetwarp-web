@@ -16,6 +16,7 @@ import {
     ClientCalls,
     TProgressInput,
     TFetchMetadataOutput,
+    ProgressPayload,
 } from './rpcCalls';
 import { r, d, BROWSER_CALLS_SERVER, SERVER_CALLS_BROWSER } from './constants';
 import LocalMethods from './streetwarp-local';
@@ -109,10 +110,10 @@ function handleProgressConnection(socket: ws, req: IncomingMessage) {
         )}) connected to ${req.url}`
     );
     socket.on('message', async (msg) => {
-        const { key, payload } = JSON.parse(msg.toString());
+        const { key, payload, index } = JSON.parse(msg.toString());
         const sendProgress = sendProgressByKey.get(key);
         if (sendProgress) {
-            sendProgress(payload);
+            sendProgress({ ...(payload as ProgressPayload), index });
         } else {
             d(`Received progress for disconnected client ${key}`);
         }
@@ -278,7 +279,12 @@ function handleConnection(socket: io.Socket) {
                 metadataPath,
                 JSON.stringify(metadataResult)
             );
-            const url = `/result/${key}/?src=${encodeURIComponent(remoteUrl)}`;
+            const url = `/result/${key}/?src=${encodeURIComponent(
+                remoteUrl.replace(
+                    'https://streetwarpstorage.blob.core.windows.net',
+                    'https://streetwarpvideo.azureedge.net'
+                )
+            )}`;
             d(`Returning hyperlapse result: ${url}`);
             return { url };
         } finally {

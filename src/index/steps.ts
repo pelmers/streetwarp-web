@@ -26,17 +26,47 @@ export const showLoader = () => {
     setLoadingStage('');
 };
 let stage = '';
-export const setLoadingStage = (text: string) => {
-    stage = text;
-    $loadingProgressText.innerText = text;
+const progressByIndex: Map<number, { stage: string; message: string }> = new Map();
+const updateProgressText = () => {
+    const keys = Array.from(progressByIndex.keys()).sort();
+    let text = '';
+    for (const k of keys) {
+        const { stage, message } = progressByIndex.get(k)!;
+        text += `(Job ${k + 1}/${keys.length}) ${stage}`;
+        if (message.length > 0) {
+            text += `: ${message}`;
+        }
+        text += '<br>';
+    }
+    $loadingProgressText.innerHTML = text;
 };
-export const setLoadingText = (text: string) => {
-    $loadingProgressText.innerText = `${stage}: ${text}`;
-    inError = false;
+export const setLoadingStage = (text: string, index?: number) => {
+    if (index == null) {
+        progressByIndex.clear();
+        stage = text;
+        $loadingProgressText.innerHTML = text;
+    } else {
+        progressByIndex.set(index, { stage: text, message: '' });
+        updateProgressText();
+    }
 };
-export const setError = (message: string) => {
+export const setLoadingText = (text: string, index?: number) => {
+    if (index == null) {
+        $loadingProgressText.innerHTML = `${stage}: ${text}`;
+        inError = false;
+    } else {
+        if (progressByIndex.has(index)) {
+            const { stage } = progressByIndex.get(index);
+            progressByIndex.set(index, { stage, message: text });
+        } else {
+            progressByIndex.set(index, { stage: '', message: text });
+        }
+        updateProgressText();
+    }
+};
+export const setError = (err: Error | string) => {
     showLoader();
-    $loadingProgressText.innerText = `Error: ${message}`;
+    $loadingProgressText.innerText = `Error: ${(err as Error).message || err}`;
     inError = true;
 };
 export const hideLoader = () => {

@@ -1,17 +1,41 @@
 import util from 'util';
 import { d, FRAME_LIMIT_PER_VIDEO } from './constants';
 import {
+    FetchMetadataOutput,
     TBuildHyperlapseInput,
     TFetchMetadataInput,
     TFetchMetadataOutput,
 } from './rpcCalls';
+import { isRight } from 'fp-ts/lib/Either';
 
 import aws from 'aws-sdk';
+
+const FUNCTION_VERSION = 45;
 
 type EntryParams = {
     key: string;
     googleApiKey: string;
 };
+
+type BaseLambdaParams = {
+    key: string;
+    index?: number | null;
+    callbackEndpoint?: string;
+};
+
+type StreetwarpParams = BaseLambdaParams & {
+    args: string[];
+    useOptimizer: boolean;
+    contents: string;
+    extension: 'gpx' | 'json';
+};
+
+type JoinVideosParams = BaseLambdaParams & {
+    joinVideos: true;
+    videoUrls: string[];
+};
+
+type LambdaParams = StreetwarpParams | JoinVideosParams;
 
 aws.config.update({
     accessKeyId: process.env['AWS_ACCESS_KEY_ID'],
@@ -26,29 +50,22 @@ aws.config.update({
 aws.config.logger = console;
 
 async function callLambda(
-    key: string,
-    args: string[],
-    useOptimizer: boolean,
-    contents: string,
-    extension: 'gpx' | 'json'
+    params: LambdaParams
 ): Promise<{
-    metadataResult: TFetchMetadataOutput;
+    metadataResult: TFetchMetadataOutput | undefined;
     videoResult: { url: string } | undefined;
 }> {
+    params = {
+        ...params,
+        callbackEndpoint: 'wss://streetwarp.ml/progress-connection',
+    };
     const client = new aws.Lambda();
     d('Invoking lambda function');
     const response: aws.Lambda.InvocationResponse = await util.promisify(
         client.invoke.bind(client)
     )({
-        FunctionName: 'streetwarp',
-        Payload: JSON.stringify({
-            key,
-            args,
-            contents,
-            extension,
-            useOptimizer,
-            callbackEndpoint: 'wss://streetwarp.ml/progress-connection',
-        }),
+        FunctionName: `streetwarp:${FUNCTION_VERSION}`,
+        Payload: JSON.stringify(params),
     });
     let parsedResponse;
     try {
@@ -79,20 +96,20 @@ async function fetchMetadata(
         params.googleApiKey,
         '--dry-run',
         '--max-frames',
-        FRAME_LIMIT_PER_VIDEO.toString(),
+        (FRAME_LIMIT_PER_VIDEO * 10).toString(),
         '--frames-per-mile',
         msg.frameDensity.toString(),
         '--json',
     ];
     return (
-        await callLambda(
-            params.key,
+        await callLambda({
+            key: params.key,
             args,
-            false,
-            msg.input.contents,
-            msg.input.extension
-        )
-    ).metadataResult;
+            useOptimizer: false,
+            contents: msg.input.contents,
+            extension: msg.input.extension,
+        })
+    ).metadataResult!;
 }
 
 async function buildHyperlapse(
@@ -100,36 +117,77 @@ async function buildHyperlapse(
     params: EntryParams,
     onMetadata: (metadata: TFetchMetadataOutput) => unknown
 ): Promise<string> {
-    // TODO let long routes be processed in parallel and join each video part later
+    const metadata = FetchMetadataOutput.decode(JSON.parse(msg.input.contents));
+    if (!isRight(metadata)) {
+        throw new Error('Could not validate input as metadata type');
+    }
+    const { frames } = metadata.right;
     const { mode } = msg;
     const minterp = mode === 'fast' ? 'skip' : mode === 'med' ? 'fast' : 'good';
-    const args = [
-        '--progress',
-        '--api-key',
-        params.googleApiKey,
-        '--frames-per-mile',
-        msg.frameDensity.toString(),
-        '--json',
-        '--print-metadata',
-        '--max-frames',
-        FRAME_LIMIT_PER_VIDEO.toString(),
-        '--minterp',
-        minterp,
-    ];
-    if (msg.optimize) {
-        args.push(
-            '--optimizer-arg',
-            JSON.stringify({ ratio_test: 0.71, n_features: 350, velocity_factor: 111 })
+    const lambdaCalls = [];
+    const maxIndex = Math.floor(frames / FRAME_LIMIT_PER_VIDEO);
+    for (
+        let offset = 0, index = 0;
+        offset < frames;
+        offset += FRAME_LIMIT_PER_VIDEO, index++
+    ) {
+        const args = [
+            '--progress',
+            '--api-key',
+            params.googleApiKey,
+            '--frames-per-mile',
+            msg.frameDensity.toString(),
+            '--json',
+            '--print-metadata',
+            '--max-frames',
+            FRAME_LIMIT_PER_VIDEO.toString(),
+            '--offset-frames',
+            offset.toString(),
+            '--minterp',
+            minterp,
+            '--use-metadata',
+        ];
+        if (msg.optimize) {
+            args.push(
+                '--optimizer-arg',
+                JSON.stringify({
+                    ratio_test: 0.71,
+                    n_features: 350,
+                    velocity_factor: 111,
+                })
+            );
+        }
+        lambdaCalls.push(
+            callLambda({
+                key: params.key,
+                // Don't send index if there's only 1
+                index: maxIndex === 0 ? null : index,
+                args,
+                useOptimizer: msg.optimize,
+                ...msg.input,
+            })
         );
     }
-    const result = await callLambda(
-        params.key,
-        args,
-        msg.optimize,
-        msg.input.contents,
-        msg.input.extension
+    const results = await Promise.all(lambdaCalls);
+    // Average out all the metadata results and join points together
+    onMetadata(
+        results.slice(1).reduce(
+            (accum, { metadataResult: next }) => ({
+                // Most of the metadata isn't updated across the split segments, except for gpsPoints.
+                ...accum,
+                gpsPoints: accum.gpsPoints.concat(next.gpsPoints),
+            }),
+            results[0].metadataResult
+        )
     );
-    onMetadata(result.metadataResult);
+    if (results.length === 1) {
+        return results[0].videoResult.url;
+    }
+    const result = await callLambda({
+        key: params.key,
+        joinVideos: true,
+        videoUrls: results.map((r) => r.videoResult.url),
+    });
     return result.videoResult.url;
 }
 

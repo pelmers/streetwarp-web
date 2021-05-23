@@ -1,5 +1,4 @@
 import { buildHyperlapse, fetchMetadata, server } from '../common/socket-client';
-import { FRAME_LIMIT_PER_VIDEO } from '../constants';
 import { ClientCalls, TFetchMetadataOutput } from '../rpcCalls';
 import { loadRoute } from './rwgps';
 import {
@@ -20,15 +19,16 @@ declare const plausible: any;
 async function withProgress<O>(f: () => Promise<O>): Promise<O> {
     const disposable = server.register(ClientCalls.ReceiveProgress, async (msg) => {
         if (msg.type === 'PROGRESS') {
-            setLoadingText(msg.message);
+            setLoadingText(msg.message, msg.index);
         } else {
-            setLoadingStage(msg.stage);
+            setLoadingStage(msg.stage, msg.index);
         }
         return null;
     });
     try {
         return await f();
     } finally {
+        hideLoader();
         disposable.dispose();
     }
 }
@@ -37,7 +37,7 @@ async function catchWithProgress<O>(f: () => Promise<O>): Promise<O> {
     try {
         return await withProgress(f);
     } catch (e) {
-        setError((e as Error).message);
+        setError(e);
     }
 }
 
@@ -126,7 +126,6 @@ $stravaActivityButton.addEventListener('click', async () => {
     $stravaActivityInput.style.display = 'none';
     showNextStep();
     plausible('loaded-activity', { props: { type: 'strava' } });
-    hideLoader();
 });
 
 const $rwgpsActivityInput = document.querySelector<HTMLInputElement>(
@@ -165,9 +164,7 @@ $rwgpsActivityButton.addEventListener('click', async () => {
         showNextStep();
         plausible('loaded-activity', { props: { type: 'rwgps' } });
     } catch (e) {
-        setError((e as Error).message);
-    } finally {
-        hideLoader();
+        setError(e);
     }
 });
 
@@ -219,6 +216,7 @@ $frameDensityInput.addEventListener('input', () => {
 const $fetchMetadataButton = document.querySelector<HTMLButtonElement>(
     '#fetch-metadata'
 );
+let metadataResult: TFetchMetadataOutput;
 $fetchMetadataButton.addEventListener('click', async () => {
     if (isProcessing()) {
         // If we're already processing something, ignore the button.
@@ -231,14 +229,14 @@ $fetchMetadataButton.addEventListener('click', async () => {
             ? { contents: jsonContents, extension: 'json' as const }
             : { contents: await gpxContents, extension: 'gpx' as const };
     try {
-        const metadataResult = await withProgress(() =>
+        metadataResult = await withProgress(() =>
             fetchMetadata({
                 input,
                 // Kilometers to miles
                 frameDensity: $frameDensityInput.valueAsNumber * 1.60934,
             })
         );
-        populateStats(metadataResult);
+        populateStats();
         showNextStep();
         plausible('fetched-metadata');
         document.querySelector<HTMLDivElement>('#api-notes').style.display = 'block';
@@ -246,9 +244,7 @@ $fetchMetadataButton.addEventListener('click', async () => {
     } catch (e) {
         const { message } = e as Error;
         plausible('fetched-metadata-error', { props: { message } });
-        setError(message);
-    } finally {
-        hideLoader();
+        setError(e);
     }
     await waitForNextApiKeyChange();
     plausible('got-api-key');
@@ -259,7 +255,7 @@ $fetchMetadataButton.addEventListener('click', async () => {
 
 const $gpxStatsList = document.querySelector<HTMLUListElement>('#gpx-stats');
 const $costEstimateText = document.querySelector<HTMLSpanElement>('#cost-estimate');
-function populateStats(metadataResult: TFetchMetadataOutput) {
+function populateStats() {
     const { frames, distance, averageError } = metadataResult;
     $gpxStatsList.innerHTML = `
     <li>Total distance: <b>${(distance / 1000).toFixed(2)} km</b></li>
@@ -268,9 +264,6 @@ function populateStats(metadataResult: TFetchMetadataOutput) {
         2
     )} m</b></li>
     `;
-    if (frames >= FRAME_LIMIT_PER_VIDEO) {
-        $gpxStatsList.innerHTML += `<li>Warning: result only uses first ${FRAME_LIMIT_PER_VIDEO} images to avoid runtime limits</li>`;
-    }
     $costEstimateText.innerText = `$${(frames * 0.007).toFixed(2)}`;
 }
 
@@ -320,14 +313,13 @@ const handleBuildButton = async (mode: string) => {
     try {
         await validateToken(apiKey);
     } catch (e) {
-        setError((e as Error).message);
-        hideLoader();
+        setError(e);
         return;
     }
-    const input =
-        jsonContents != null
-            ? { contents: jsonContents, extension: 'json' as const }
-            : { contents: await gpxContents, extension: 'gpx' as const };
+    const input = {
+        contents: JSON.stringify(metadataResult),
+        extension: 'json' as const,
+    };
     const result = await catchWithProgress(() =>
         buildHyperlapse({
             apiKey,
@@ -337,7 +329,6 @@ const handleBuildButton = async (mode: string) => {
             optimize: $optimizeCheckbox.checked,
         })
     );
-    hideLoader();
     if (result != null) {
         // STEP 6: SHOW RESULTS
         document.querySelector<HTMLAnchorElement>('#result-anchor').href = result.url;
