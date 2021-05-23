@@ -33,11 +33,17 @@ async function withProgress<O>(f: () => Promise<O>): Promise<O> {
     }
 }
 
-async function catchWithProgress<O>(f: () => Promise<O>): Promise<O> {
+async function catchWithProgress<O>(
+    f: () => Promise<O>,
+    logEvent?: string
+): Promise<O> {
     try {
         return await withProgress(f);
     } catch (e) {
         setError(e);
+        if (logEvent != null) {
+            plausible(logEvent, { props: { message: (e as Error).message || e } });
+        }
     }
 }
 
@@ -228,24 +234,20 @@ $fetchMetadataButton.addEventListener('click', async () => {
         jsonContents != null
             ? { contents: jsonContents, extension: 'json' as const }
             : { contents: await gpxContents, extension: 'gpx' as const };
-    try {
-        metadataResult = await withProgress(() =>
+    metadataResult = await catchWithProgress(
+        () =>
             fetchMetadata({
                 input,
                 // Kilometers to miles
                 frameDensity: $frameDensityInput.valueAsNumber * 1.60934,
-            })
-        );
-        populateStats();
-        showNextStep();
-        plausible('fetched-metadata');
-        document.querySelector<HTMLDivElement>('#api-notes').style.display = 'block';
-        showNextStep();
-    } catch (e) {
-        const { message } = e as Error;
-        plausible('fetched-metadata-error', { props: { message } });
-        setError(e);
-    }
+            }),
+        'fetched-metadata-error'
+    );
+    populateStats();
+    showNextStep();
+    plausible('fetched-metadata');
+    document.querySelector<HTMLDivElement>('#api-notes').style.display = 'block';
+    showNextStep();
     await waitForNextApiKeyChange();
     plausible('got-api-key');
     if (currentStepIndex() === 3) {
@@ -320,14 +322,16 @@ const handleBuildButton = async (mode: string) => {
         contents: JSON.stringify(metadataResult),
         extension: 'json' as const,
     };
-    const result = await catchWithProgress(() =>
-        buildHyperlapse({
-            apiKey,
-            input,
-            frameDensity: $frameDensityInput.valueAsNumber,
-            mode: mode as 'fast' | 'med' | 'slow',
-            optimize: $optimizeCheckbox.checked,
-        })
+    const result = await catchWithProgress(
+        () =>
+            buildHyperlapse({
+                apiKey,
+                input,
+                frameDensity: $frameDensityInput.valueAsNumber,
+                mode: mode as 'fast' | 'med' | 'slow',
+                optimize: $optimizeCheckbox.checked,
+            }),
+        'build-hyperlapse-error'
     );
     if (result != null) {
         // STEP 6: SHOW RESULTS
