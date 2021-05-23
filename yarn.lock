@@ -4295,7 +4295,7 @@ forwarded@~0.1.2:
   resolved "https://registry.yarnpkg.com/forwarded/-/forwarded-0.1.2.tgz#98c23dab1175657b8c0573e8ceccd91b0ff18c84"
   integrity sha1-mMI9qxF1ZXuMBXPozszZGw/xjIQ=
 
-fp-ts@^2.10.4:
+fp-ts@^2.10.4, fp-ts@^2.10.5:
   version "2.10.5"
   resolved "https://registry.yarnpkg.com/fp-ts/-/fp-ts-2.10.5.tgz#7c77868fe8bd9b229743303c1bec505b959f631b"
   integrity sha512-X2KfTIV0cxIk3d7/2Pvp/pxL/xr2MV1WooyEzKtTWYSc1+52VF4YzjBTXqeOlSiZsPCxIBpDGfT9Dyo7WEY0DQ==
@@ -6723,10 +6723,10 @@ robust-predicates@^2.0.4:
   resolved "https://registry.yarnpkg.com/robust-predicates/-/robust-predicates-2.0.4.tgz#0a2367a93abd99676d075981707f29cfb402248b"
   integrity sha512-l4NwboJM74Ilm4VKfbAtFeGq7aEjWL+5kVFcmgFA2MrdnQWx9iE/tUGvxY5HyMI7o/WpSIUFLbC5fbeaHgSCYg==
 
-roots-rpc@^1.2.1:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/roots-rpc/-/roots-rpc-1.2.1.tgz#d2955b3474054f7cade59d44ab92d9f73764c280"
-  integrity sha512-aIuvs2Qk0AljTj5W5qzMHge/kgi02f8gXUkeRiRvrDu73x4uV6fkEzABO40O/tRatrywaykVjwvbYkoxTNmLIQ==
+roots-rpc@^1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/roots-rpc/-/roots-rpc-1.2.2.tgz#89eb6195760d98a62241f3e0a291830fbd6221cf"
+  integrity sha512-rBm4xAnQjd4he80o7WxhELRLboKL0/qcNW4pkqlIKzC87ruvQqcv/izTAq6qjGJ3buXpNLbjFHrn+BUzFZgUGA==
   dependencies:
     fp-ts "^2.10.4"
     io-ts "^2.2.16"
