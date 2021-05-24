@@ -10,7 +10,7 @@ import { isRight } from 'fp-ts/lib/Either';
 
 import aws from 'aws-sdk';
 
-const FUNCTION_VERSION = 45;
+const FUNCTION_VERSION = 48;
 
 type EntryParams = {
     key: string;

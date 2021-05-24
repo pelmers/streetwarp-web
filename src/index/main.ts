@@ -159,19 +159,17 @@ $rwgpsButton.addEventListener('click', () => {
 $rwgpsActivityButton.addEventListener('click', async () => {
     setLoadingStage('Loading Route');
     showLoader();
-    try {
-        const { name, km, points } = await loadRoute($rwgpsActivityInput.value);
-        jsonContents = points;
-        document.querySelector<HTMLHeadingElement>(
-            '#rwgps-activity-text'
-        ).textContent = `${name}: ${km.toFixed(2)} km`;
-        $rwgpsActivityButton.style.display = 'none';
-        $rwgpsActivityInput.style.display = 'none';
-        showNextStep();
-        plausible('loaded-activity', { props: { type: 'rwgps' } });
-    } catch (e) {
-        setError(e);
-    }
+    const { name, km, points } = await catchWithProgress(() =>
+        loadRoute($rwgpsActivityInput.value)
+    );
+    jsonContents = points;
+    document.querySelector<HTMLHeadingElement>(
+        '#rwgps-activity-text'
+    ).textContent = `${name}: ${km.toFixed(2)} km`;
+    $rwgpsActivityButton.style.display = 'none';
+    $rwgpsActivityInput.style.display = 'none';
+    showNextStep();
+    plausible('loaded-activity', { props: { type: 'rwgps' } });
 });
 
 const $gpxInput = document.querySelector<HTMLInputElement>('#gpx-input');
