@@ -1,4 +1,9 @@
-import { buildHyperlapse, fetchMetadata, server } from '../common/socket-client';
+import {
+    buildHyperlapse,
+    fetchMetadata,
+    loadGMapsRoute,
+    server,
+} from '../common/socket-client';
 import { ClientCalls, TFetchMetadataOutput } from '../rpcCalls';
 import { loadRoute } from './rwgps';
 import {
@@ -15,6 +20,7 @@ import {
 import { getStravaResult, loadActivity } from './strava';
 
 declare const plausible: any;
+declare const Gmdp: any;
 
 async function withProgress<O>(f: () => Promise<O>): Promise<O> {
     const disposable = server.register(ClientCalls.ReceiveProgress, async (msg) => {
@@ -66,9 +72,11 @@ document
     .addEventListener('click', () => (window.location.href = 'https://streetwarp.ml/'));
 
 // STEP 1: GET GPX FILE DATA
-const $stravaButton = document.querySelector<HTMLButtonElement>('#strava-button');
-const $rwgpsButton = document.querySelector<HTMLButtonElement>('#rwgps-button');
+const $stravaLogoButton = document.querySelector<HTMLButtonElement>('#strava-button');
+const $rwgpsLogoButton = document.querySelector<HTMLButtonElement>('#rwgps-button');
+const $gmapsLogoButton = document.querySelector<HTMLButtonElement>('#gmaps-button');
 const $stravaError = document.querySelector<HTMLDivElement>('#strava-error');
+const $gmapsError = document.querySelector<HTMLDivElement>('#strava-error');
 const $stravaName = document.querySelector<HTMLSpanElement>('#strava-name');
 const $stravaProfile = document.querySelector<HTMLImageElement>('#strava-profile');
 const $stravaConnected = document.querySelector<HTMLDivElement>('#strava-connected');
@@ -86,14 +94,15 @@ getStravaResult((e) => {
     $stravaError.style.display = 'inline-block';
 }).then(({ result }) => {
     if ('requestURL' in result) {
-        $stravaButton.addEventListener(
+        $stravaLogoButton.addEventListener(
             'click',
             () => (window.location.href = result.requestURL)
         );
     } else {
         stravaAccessToken = result.profile.token;
-        $stravaButton.style.display = 'none';
-        $rwgpsButton.style.display = 'none';
+        $stravaLogoButton.style.display = 'none';
+        $rwgpsLogoButton.style.display = 'none';
+        $gmapsLogoButton.style.display = 'none';
         $stravaName.textContent = result.profile.name;
         $stravaProfile.src = result.profile.profileURL;
         $stravaConnected.style.display = 'inline-block';
@@ -140,10 +149,11 @@ const $rwgpsActivityInput = document.querySelector<HTMLInputElement>(
 const $rwgpsActivityButton = document.querySelector<HTMLButtonElement>(
     '#rwgps-activity-button'
 );
-$rwgpsButton.addEventListener('click', () => {
-    $stravaButton.style.display = 'none';
+$rwgpsLogoButton.addEventListener('click', () => {
+    $stravaLogoButton.style.display = 'none';
     $stravaError.style.display = 'none';
-    $rwgpsButton.style.display = 'none';
+    $rwgpsLogoButton.style.display = 'none';
+    $gmapsLogoButton.style.display = 'none';
     document.querySelector<HTMLHeadingElement>('#gpx-step-header').style.display =
         'none';
     document.querySelector<HTMLDivElement>('#gpx-step-contents').style.display = 'none';
@@ -170,6 +180,62 @@ $rwgpsActivityButton.addEventListener('click', async () => {
     $rwgpsActivityInput.style.display = 'none';
     showNextStep();
     plausible('loaded-activity', { props: { type: 'rwgps' } });
+});
+
+const $gmapsDirectionsInput = document.querySelector<HTMLInputElement>(
+    '#gmaps-directions-input'
+);
+const $gmapsDirectionsButton = document.querySelector<HTMLButtonElement>(
+    '#gmaps-directions-button'
+);
+$gmapsLogoButton.addEventListener('click', () => {
+    $stravaLogoButton.style.display = 'none';
+    $stravaError.style.display = 'none';
+    $rwgpsLogoButton.style.display = 'none';
+    $gmapsLogoButton.style.display = 'none';
+    document.querySelector<HTMLHeadingElement>('#gpx-step-header').style.display =
+        'none';
+    document.querySelector<HTMLDivElement>('#gpx-step-contents').style.display = 'none';
+    document.querySelector<HTMLHeadingElement>('#gmaps-directions-text').style.display =
+        'inline-block';
+    $gmapsDirectionsButton.style.display = 'inline-block';
+    $gmapsDirectionsInput.style.display = 'inline-block';
+    $gmapsDirectionsInput.addEventListener(
+        'keypress',
+        (ev) => ev.code === 'Enter' && $gmapsDirectionsButton.click()
+    );
+});
+$gmapsDirectionsButton.addEventListener('click', async () => {
+    setLoadingStage('Loading Route from directions');
+    showLoader();
+    const { name, km, points } = await catchWithProgress(() => {
+        const url = $gmapsDirectionsInput.value;
+        const gmdp = new Gmdp(url);
+        const { route, transportation } = gmdp.getRoute();
+        // map transportation mode from 'car|bike|foot|transit' to 'driving|bicycling|walking|transit'
+        const mode =
+            transportation != null
+                ? transportation
+                      .replace('car', 'driving')
+                      .replace('bike', 'bicycling')
+                      .replace('foot', 'walking')
+                : null;
+        return loadGMapsRoute({
+            waypoints: route.map((p: any) => ({
+                lat: Number.parseFloat(p.lat),
+                lng: Number.parseFloat(p.lng),
+            })),
+            mode,
+        });
+    });
+    jsonContents = points;
+    document.querySelector<HTMLHeadingElement>(
+        '#gmaps-directions-text'
+    ).textContent = `${name}: ${km.toFixed(2)} km`;
+    $gmapsDirectionsButton.style.display = 'none';
+    $gmapsDirectionsInput.style.display = 'none';
+    showNextStep();
+    plausible('loaded-activity', { props: { type: 'gmaps' } });
 });
 
 const $gpxInput = document.querySelector<HTMLInputElement>('#gpx-input');
@@ -203,10 +269,9 @@ function handleFiles(files: FileList) {
     }</b> (${mb.toFixed(2)} MB)`;
     document.querySelector<HTMLDivElement>('#gpx-step-contents').style.textAlign =
         'center';
-    $stravaButton.style.display = 'none';
+    $stravaLogoButton.style.display = 'none';
     $stravaError.style.display = 'none';
 }
-// TODO google maps support?
 
 // STEP 2: GET FRAME DENSITY AND SEND METADATA REQUEST
 const $frameDensityInput = document.querySelector<HTMLInputElement>('#frame-density');

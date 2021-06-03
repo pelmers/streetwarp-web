@@ -10,6 +10,7 @@ import favicon from 'serve-favicon';
 import consoleStamp from 'console-stamp';
 import io from 'socket.io';
 import ws from 'ws';
+import { decode, encode, LatLng } from '@googlemaps/polyline-codec';
 
 import {
     ServerCalls,
@@ -245,6 +246,39 @@ function handleConnection(socket: io.Socket) {
             km: distance / 1000,
             points,
         };
+    });
+
+    server.register(ServerCalls.LoadGMapsRoute, async ({ waypoints, mode }) => {
+        const start = waypoints[0];
+        const dest = waypoints[waypoints.length - 1];
+        const encodedWaypoints =
+            waypoints.length > 2 ? encode(waypoints.slice(1, -1)) : null;
+        const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${
+            start.lat
+        },${start.lng}&destination=${dest.lat},${dest.lng}${
+            encodedWaypoints != null
+                ? '&waypoints=via:enc:' + encodedWaypoints + ':'
+                : ''
+        }&mode=${mode || 'bicycling'}&key=${googleApiKey}`;
+
+        const response = await fetch(url);
+        const result = await response.json();
+        if (response.status !== 200) {
+            throw new Error(result.error_message);
+        }
+        const route = result.routes[0];
+        const name = route.summary || 'Google Maps Route';
+        let km = 0.0;
+        let points: LatLng[] = [];
+        for (const leg of route.legs) {
+            for (const step of leg.steps) {
+                points = points.concat(
+                    decode(step.polyline.points).map(([lat, lng]) => ({ lat, lng }))
+                );
+                km += step.distance.value / 1000;
+            }
+        }
+        return { name, km, points: JSON.stringify(points) };
     });
 
     server.register(ServerCalls.GetMapboxKey, async () => mapboxApiKey);

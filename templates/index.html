@@ -9,7 +9,7 @@
             name="description"
             content="Turn GPX routes into animated hyperlapse movies using
             Streetwarp. Perfect for bike touring, long-distance running, and
-            driving. With Strava and RideWithGPS integration."
+            driving, supports Strava and Google Maps."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="stylesheet" href="/static/vendor/sakura.css" />
@@ -44,6 +44,9 @@
                 <button id="rwgps-button">
                     <img src="/static/vendor/ridewithgps_btn.png" />
                 </button>
+                <button id="gmaps-button">
+                    <img src="/static/vendor/googlemaps_btn.png" />
+                </button>
                 <div id="strava-error">Strava Error message</div>
                 <div id="strava-connected">
                     <img id="strava-profile" />
@@ -58,7 +61,7 @@
                 />
                 <button id="strava-activity-button">Submit</button>
 
-                <div id="rwgps-error">Strava Error message</div>
+                <div id="rwgps-error">RideWithGPS Error message</div>
                 <h4 id="rwgps-activity-text">
                     Enter Ride With GPS route URL (must be public):
                 </h4>
@@ -69,6 +72,15 @@
                     placeholder="e.g. https://ridewithgps.com/routes/34667080"
                 />
                 <button id="rwgps-activity-button">Submit</button>
+
+                <h4 id="gmaps-directions-text">Enter Google Maps Directions URL:</h4>
+                <input
+                    type="text"
+                    id="gmaps-directions-input"
+                    required
+                    placeholder="e.g. https://www.google.com/maps/dir/Space+Needle,+Space+Needle,+Broad+Street,+Seattle,+WA/Pike+Place+Market,+Seattle,+WA/@47.6154244,-122.3486464,16z"
+                />
+                <button id="gmaps-directions-button">Submit</button>
 
                 <h4 id="gpx-step-header">OR Upload GPX file</h4>
                 <div id="gpx-step-contents">
@@ -229,6 +241,7 @@
             >
         </div>
         <script src="/socket.io/socket.io.js"></script>
+        <script src="/dist/google-maps-data-parameter-parser/src/googleMapsDataParameter.js"></script>
         <script src="/dist/index.bundle.js" async defer></script>
     </body>
 </html>

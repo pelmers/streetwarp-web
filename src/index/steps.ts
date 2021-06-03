@@ -21,6 +21,7 @@ let inProcessing = false;
 let inError = false;
 export const showLoader = () => {
     inProcessing = true;
+    inError = false;
     $loading.style.display = 'inline-block';
     $loadingProgressText.style.display = 'block';
     setLoadingStage('');

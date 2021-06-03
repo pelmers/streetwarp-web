@@ -12,5 +12,6 @@ export const fetchExistingMetadata = client.connect(ServerCalls.FetchExistingMet
 export const getStravaStatus = client.connect(ServerCalls.GetStravaStatus);
 export const loadStravaActivity = client.connect(ServerCalls.LoadStravaActivity);
 export const loadRWGPSRoute = client.connect(ServerCalls.LoadRWGPSRoute);
+export const loadGMapsRoute = client.connect(ServerCalls.LoadGMapsRoute);
 export const getMapboxKey = client.connect(ServerCalls.GetMapboxKey);
 export const buildHyperlapse = client.connect(ServerCalls.BuildHyperlapse);

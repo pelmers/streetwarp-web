@@ -846,6 +846,11 @@
     lodash "^4.17.19"
     to-fast-properties "^2.0.0"
 
+"@googlemaps/polyline-codec@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@googlemaps/polyline-codec/-/polyline-codec-1.0.1.tgz#e801c0f362f9fbc958dcf9aa8c00428ffb914c85"
+  integrity sha512-yejy2ebQkX7vPVmbKiU2E8Pz3PuvPS9yC6Kh2IrlcOgY51vsvT6N7d1LF59FB9ATlqrrNuOTIaoTS56YvUA5OA==
+
 "@mapbox/geojson-rewind@^0.5.0":
   version "0.5.0"
   resolved "https://registry.yarnpkg.com/@mapbox/geojson-rewind/-/geojson-rewind-0.5.0.tgz#91f0ad56008c120caa19414b644d741249f4f560"

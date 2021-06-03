@@ -7,7 +7,7 @@
         "build": "webpack --config webpack.config.js",
         "watch": "webpack --config webpack.config.js --watch",
         "serve": "yarn build && node dist/server.bundle.js",
-        "format": "node_modules/.bin/prettier --ignore-path .gitignore --write '.'"
+        "format": "node_modules/.bin/prettier --ignore-path .gitignore --write '.' '!**/third-party/**/*'"
     },
     "author": "Peter Elmers",
     "license": "MIT",
@@ -53,6 +53,7 @@
         "webpack-node-externals": "^2.5.2"
     },
     "dependencies": {
+        "@googlemaps/polyline-codec": "^1.0.1",
         "aws-sdk": "^2.799.0",
         "compression": "^1.7.4",
         "console-stamp": "^0.2.9",

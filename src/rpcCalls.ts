@@ -62,6 +62,17 @@ const LoadStravaActivityOutput = t.type({
 export type TLoadStravaActivityOutput = t.TypeOf<typeof LoadStravaActivityOutput>;
 
 const LoadRWGPSRouteInput = t.type({ id: t.number });
+const LoadGMapsRouteInput = t.type({
+    waypoints: t.array(LatLng),
+    mode: optional(
+        t.union([
+            t.literal('bicycling'),
+            t.literal('driving'),
+            t.literal('walking'),
+            t.literal('transit'),
+        ])
+    ),
+});
 
 const BuildHyperlapseInput = t.type({
     apiKey: t.string,
@@ -95,6 +106,10 @@ export const ServerCalls = {
     }),
     LoadRWGPSRoute: () => ({
         i: LoadRWGPSRouteInput,
+        o: LoadStravaActivityOutput,
+    }),
+    LoadGMapsRoute: () => ({
+        i: LoadGMapsRouteInput,
         o: LoadStravaActivityOutput,
     }),
     GetMapboxKey: () => ({

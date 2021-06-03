@@ -1,6 +1,6 @@
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
-const CopyPlugin = require("copy-webpack-plugin");
+const CopyPlugin = require('copy-webpack-plugin');
 
 const ROOT = path.resolve(__dirname, 'src');
 const DESTINATION = path.resolve(__dirname, 'dist');
@@ -26,10 +26,8 @@ const clientConfig = {
 
     plugins: [
         new CopyPlugin({
-            patterns: [
-                {from: "third-party"}
-            ]
-        })
+            patterns: [{ from: 'third-party' }],
+        }),
     ],
 
     module: {

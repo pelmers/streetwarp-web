@@ -19,14 +19,16 @@ the web server.
 
 ### Features
 
--   Connect to Strava or upload GPX file directly
+-   Connect to Strava, RideWithGPS, or Google Maps, or upload GPX file directly
 -   Several output options to trade-off processing speed and result quality
 -   Animated route during video playback (using [mapbox](https://www.mapbox.com/))
 
 ### Usage
 
 ```
+git submodule update --init --recursive
 yarn
+yarn build
 node_modules/.bin/ts-node src/server.ts --streetwarp-bin=<location of streetwarp binary> [--debug]
 ```
 
