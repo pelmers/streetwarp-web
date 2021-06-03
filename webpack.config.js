@@ -1,5 +1,6 @@
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
+const CopyPlugin = require("copy-webpack-plugin");
 
 const ROOT = path.resolve(__dirname, 'src');
 const DESTINATION = path.resolve(__dirname, 'dist');
@@ -22,6 +23,14 @@ const clientConfig = {
         extensions: ['.ts', '.js'],
         modules: [ROOT, 'node_modules'],
     },
+
+    plugins: [
+        new CopyPlugin({
+            patterns: [
+                {from: "third-party"}
+            ]
+        })
+    ],
 
     module: {
         rules: [

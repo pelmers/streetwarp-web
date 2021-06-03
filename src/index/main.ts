@@ -206,6 +206,7 @@ function handleFiles(files: FileList) {
     $stravaButton.style.display = 'none';
     $stravaError.style.display = 'none';
 }
+// TODO google maps support?
 
 // STEP 2: GET FRAME DENSITY AND SEND METADATA REQUEST
 const $frameDensityInput = document.querySelector<HTMLInputElement>('#frame-density');

@@ -1,0 +1,3 @@
+[submodule "src/third-party/google-maps-data-parameter-parser"]
+	path = src/third-party/google-maps-data-parameter-parser
+	url = git@github.com:david-r-edgar/google-maps-data-parameter-parser.git
