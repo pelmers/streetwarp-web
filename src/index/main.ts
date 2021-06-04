@@ -350,7 +350,6 @@ const waitForNextApiKeyChange = async () => {
 
 // STEP 5: BUILD HYPERLAPSE
 const $fastBuildButton = document.querySelector<HTMLButtonElement>('#fast-button');
-const $medBuildButton = document.querySelector<HTMLButtonElement>('#med-button');
 const $slowBuildButton = document.querySelector<HTMLButtonElement>('#slow-button');
 const $optimizeCheckbox = document.querySelector<HTMLInputElement>(
     '#optimize-checkbox'
@@ -406,5 +405,4 @@ const handleBuildButton = async (mode: string) => {
 };
 
 $fastBuildButton.addEventListener('click', () => handleBuildButton('fast'));
-$medBuildButton.addEventListener('click', () => handleBuildButton('med'));
 $slowBuildButton.addEventListener('click', () => handleBuildButton('slow'));
