@@ -203,9 +203,9 @@ document
             });
         } else {
             map.easeTo({
-                zoom: 12,
-                pitch: 20,
+                pitch: 0,
                 center: findCenter(metadata),
+                animate: false,
                 bearing: 0,
             });
             map.fitBounds(findBounds(metadata));
