@@ -2,6 +2,7 @@ import mapboxgl from 'mapbox-gl';
 import { fetchExistingMetadata, getMapboxKey } from '../common/socket-client';
 import {
     createMapFromRoutes,
+    findBounds,
     findCenter,
     toGeoJson,
     toGeoJsonFeature,
@@ -184,7 +185,7 @@ Promise.all([getMapboxKey(), fetchExistingMetadata({ key })]).then(
     }
 );
 
-let followMode = false;
+let followMode = true;
 document
     .querySelector<HTMLButtonElement>('#followcambtn')
     .addEventListener('click', () => {
@@ -207,5 +208,6 @@ document
                 center: findCenter(metadata),
                 bearing: 0,
             });
+            map.fitBounds(findBounds(metadata));
         }
     });

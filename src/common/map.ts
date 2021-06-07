@@ -42,7 +42,7 @@ export function findCenter(metadata: TFetchMetadataOutput): [number, number] {
     return toGeoJson(avg);
 }
 
-function findBounds(metadata: TFetchMetadataOutput): mapboxgl.LngLatBoundsLike {
+export function findBounds(metadata: TFetchMetadataOutput): mapboxgl.LngLatBoundsLike {
     const [sw, ne] = metadata.gpsPoints.reduce(
         ([sw, ne], cur) => [
             {
@@ -78,12 +78,11 @@ export async function createMapFromRoutes(
 ): Promise<mapboxgl.Map> {
     const map = new mapboxgl.Map({
         container,
-        zoom: 10,
-        pitch: 20,
-        center: findCenter(metadata),
+        zoom: 16,
+        pitch: 60,
+        center: toGeoJson(metadata.gpsPoints[0]),
         style: 'mapbox://styles/mapbox/outdoors-v11',
     });
-    map.fitBounds(findBounds(metadata));
     const addSource = (
         id: string,
         points: { lat: number; lng: number }[],
