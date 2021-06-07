@@ -125,11 +125,14 @@ async function buildHyperlapse(
     const { mode } = msg;
     const minterp = mode === 'fast' ? 'skip' : mode === 'med' ? 'fast' : 'good';
     const lambdaCalls = [];
-    const maxIndex = Math.floor(frames / FRAME_LIMIT_PER_VIDEO);
+    // once we know how many jobs to split into, divide what's left as evenly as possible
+    // i.e. instead of doing 1005 images as 500 + 500 + 5, do 335 + 335 + 335
+    const workerCount = Math.ceil(frames / FRAME_LIMIT_PER_VIDEO);
+    const framesPerWorker = Math.ceil(frames / workerCount);
     for (
         let offset = 0, index = 0;
         offset < frames;
-        offset += FRAME_LIMIT_PER_VIDEO, index++
+        offset += framesPerWorker, index++
     ) {
         const args = [
             '--progress',
@@ -161,7 +164,7 @@ async function buildHyperlapse(
             callLambda({
                 key: params.key,
                 // Don't send index if there's only 1
-                index: maxIndex === 0 ? null : index,
+                index: workerCount === 1 ? null : index,
                 args,
                 useOptimizer: msg.optimize,
                 ...msg.input,

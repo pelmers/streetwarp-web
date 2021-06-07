@@ -76,7 +76,6 @@ const $stravaLogoButton = document.querySelector<HTMLButtonElement>('#strava-but
 const $rwgpsLogoButton = document.querySelector<HTMLButtonElement>('#rwgps-button');
 const $gmapsLogoButton = document.querySelector<HTMLButtonElement>('#gmaps-button');
 const $stravaError = document.querySelector<HTMLDivElement>('#strava-error');
-const $gmapsError = document.querySelector<HTMLDivElement>('#strava-error');
 const $stravaName = document.querySelector<HTMLSpanElement>('#strava-name');
 const $stravaProfile = document.querySelector<HTMLImageElement>('#strava-profile');
 const $stravaConnected = document.querySelector<HTMLDivElement>('#strava-connected');
