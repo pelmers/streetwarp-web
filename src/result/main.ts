@@ -65,6 +65,29 @@ const getCurrentFrameExact = () =>
 const getFrameRate = () =>
     Math.round(($video.playbackRate * metadata.gpsPoints.length) / $video.duration);
 
+// Given bearings a and b in the range [-180, 180], return the short angle that moves a to b.
+// examples:
+// if a is 10 and b is -10, then the answer is -20.
+// if a is -10 and b is 10, then the answer is 20.
+// if a is -170 and b is 170, then the answer is -20.
+// if a is 170 and b is -170, then the answer is 20.
+const bearingDiff = (a: number, b: number) => {
+    // diff will be in the range [0, 360]
+    const diff = Math.abs(b - a);
+    const sign = b > a ? 1 : -1;
+    return sign * (diff > 180 ? -(360 - diff) : diff);
+};
+
+// Fix a bearing between [-360, 360] to [-180, 180]
+const fixBearingDomain = (b: number) => {
+    if (b < -180) {
+        return 360 + b;
+    } else if (b > 180) {
+        return -360 + b;
+    }
+    return b;
+};
+
 // TODO show error if these fetches fail
 Promise.all([getMapboxKey(), fetchExistingMetadata({ key })]).then(
     async ([token, metadataResult]) => {
@@ -139,11 +162,13 @@ Promise.all([getMapboxKey(), fetchExistingMetadata({ key })]).then(
                 lastFrame = frame;
                 if (followMode) {
                     const duration = 1000 / frameRate;
-                    const bearingDiff = nextBearing - map.getBearing();
+                    const rot = bearingDiff(map.getBearing(), nextBearing);
                     // Cap the camera rotation rate at 90 degrees/second to prevent dizziness
-                    const bearing =
-                        map.getBearing() +
-                        clamp(bearingDiff, -90 / frameRate, 90 / frameRate);
+                    // After adding the rotation, reset domain to [-180, 180]
+                    // because moving from +170 to -170 is +20, which goes to 190, and out of bounds.
+                    const bearing = fixBearingDomain(
+                        map.getBearing() + clamp(rot, -90 / frameRate, 90 / frameRate)
+                    );
                     map.easeTo({
                         center: point.features[0].geometry.coordinates,
                         bearing,
