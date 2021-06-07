@@ -143,7 +143,7 @@ async function buildHyperlapse(
             '--json',
             '--print-metadata',
             '--max-frames',
-            FRAME_LIMIT_PER_VIDEO.toString(),
+            framesPerWorker.toString(),
             '--offset-frames',
             offset.toString(),
             '--minterp',
