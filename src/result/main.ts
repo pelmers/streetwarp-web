@@ -128,7 +128,7 @@ Promise.all([getMapboxKey(), fetchExistingMetadata({ key })]).then(
         });
         let lastFrame: number | undefined;
         const updateIcon = (t: number) => {
-            // NaN if the video hasn't loaded yet, also skip if it's not being played now.
+            // NaN if the video hasn't loaded yet, so skip
             if (isNaN($video.duration)) {
                 requestAnimationFrame(updateIcon);
                 return;
