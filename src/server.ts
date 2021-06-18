@@ -1,6 +1,7 @@
 import child_process from 'child_process';
 import readline from 'readline';
 import fs from 'fs';
+import url from 'url';
 import util from 'util';
 import * as uuid from 'uuid';
 
@@ -8,7 +9,6 @@ import express from 'express';
 import compression from 'compression';
 import favicon from 'serve-favicon';
 import consoleStamp from 'console-stamp';
-import io from 'socket.io';
 import ws from 'ws';
 import { decode, encode, LatLng } from '@googlemaps/polyline-codec';
 
@@ -19,7 +19,14 @@ import {
     TFetchMetadataOutput,
     ProgressPayload,
 } from './rpcCalls';
-import { r, d, BROWSER_CALLS_SERVER, SERVER_CALLS_BROWSER } from './constants';
+import {
+    r,
+    d,
+    BROWSER_CALLS_SERVER,
+    SERVER_CALLS_BROWSER,
+    PROGRESS_WS_PATH,
+    RPC_WS_PATH,
+} from './constants';
 import LocalMethods from './streetwarp-local';
 import LambdaMethods from './streetwarp-lambda';
 // @ts-ignore no types for this api
@@ -28,7 +35,7 @@ import stravaApi from 'strava-v3';
 import gpxParser from 'gpxparser';
 import { IncomingMessage } from 'http';
 import fetch from 'node-fetch';
-import { RpcClient, RpcServer, SocketTransport } from 'roots-rpc';
+import { RpcClient, RpcServer, WebsocketTransport } from 'roots-rpc';
 
 consoleStamp(console);
 const useLambda =
@@ -93,12 +100,17 @@ Other required environment variables: GOOGLE_API_KEY, MAPBOX_API_KEY
 
     const server = app.listen(port, () => console.log(`Serving on :${port}`));
 
-    io(server).on('connection', (socket) => {
-        handleConnection(socket);
-    });
+    const wss = new ws.Server({ server });
 
-    const wss = new ws.Server({ server, path: '/progress-connection' });
-    wss.on('connection', (socket, req) => handleProgressConnection(socket, req));
+    wss.on('connection', (socket, req) => {
+        const pathname = url.parse(req.url).pathname;
+        d(`received client connection on ${req.url}`);
+        if (pathname === '/' + PROGRESS_WS_PATH) {
+            handleProgressConnection(socket, req);
+        } else if (pathname === '/' + RPC_WS_PATH) {
+            handleRpcConnection(socket, req);
+        }
+    });
 }
 
 const sendProgressByKey = new Map<string, (i: TProgressInput) => unknown>();
@@ -128,17 +140,13 @@ function handleProgressConnection(socket: ws, req: IncomingMessage) {
     );
 }
 
-function handleConnection(socket: io.Socket) {
-    d(
-        `Client ${socket.id} (${JSON.stringify(
-            socket.request.headers['user-agent']
-        )}) connected to ${socket.request.url}`
-    );
+function handleRpcConnection(socket: ws, req: IncomingMessage) {
+    d(`Client(${JSON.stringify(req.headers['user-agent'])}) connected to ${req.url}`);
 
     const runningProcesses: child_process.ChildProcess[] = [];
     const knownKeys = new Set<string>();
-    const server = new RpcServer(new SocketTransport(socket, BROWSER_CALLS_SERVER));
-    const client = new RpcClient(new SocketTransport(socket, SERVER_CALLS_BROWSER));
+    const server = new RpcServer(new WebsocketTransport(socket, BROWSER_CALLS_SERVER));
+    const client = new RpcClient(new WebsocketTransport(socket, SERVER_CALLS_BROWSER));
     const sendProgress = client.connect(ClientCalls.ReceiveProgress);
 
     server.register(ServerCalls.FetchMetadata, async (msg) => {
@@ -327,10 +335,8 @@ function handleConnection(socket: io.Socket) {
         }
     });
 
-    socket.on('disconnect', () => {
-        d(
-            `Client ${socket.id} disconnected, killing ${runningProcesses.length} processes`
-        );
+    socket.on('close', () => {
+        d(`Client disconnected, killing ${runningProcesses.length} processes`);
         // If client socket disconnects, cancel any running streetwarp calls (only applies to local mode, not Lambda)
         for (const proc of runningProcesses) {
             proc.kill('SIGKILL');

@@ -12,3 +12,7 @@ export const FRAME_LIMIT_PER_VIDEO = 600;
 
 export const SERVER_CALLS_BROWSER = 'scb';
 export const BROWSER_CALLS_SERVER = 'bcs';
+
+export const PROGRESS_WS_PATH = 'progress-connection';
+export const RPC_WS_PATH = 'rpc';
+export const WS_DOMAIN_NAME = 'wss://streetwarp.ml';

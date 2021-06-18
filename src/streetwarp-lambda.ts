@@ -1,5 +1,10 @@
 import util from 'util';
-import { d, FRAME_LIMIT_PER_VIDEO } from './constants';
+import {
+    d,
+    FRAME_LIMIT_PER_VIDEO,
+    PROGRESS_WS_PATH,
+    WS_DOMAIN_NAME,
+} from './constants';
 import {
     FetchMetadataOutput,
     TBuildHyperlapseInput,
@@ -57,7 +62,7 @@ async function callLambda(
 }> {
     params = {
         ...params,
-        callbackEndpoint: 'wss://streetwarp.ml/progress-connection',
+        callbackEndpoint: `${WS_DOMAIN_NAME}/${PROGRESS_WS_PATH}`,
     };
     const client = new aws.Lambda();
     d('Invoking lambda function');

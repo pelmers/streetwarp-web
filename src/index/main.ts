@@ -41,12 +41,13 @@ async function withProgress<O>(f: () => Promise<O>): Promise<O> {
 
 async function catchWithProgress<O>(
     f: () => Promise<O>,
+    note?: string,
     logEvent?: string
 ): Promise<O> {
     try {
         return await withProgress(f);
     } catch (e) {
-        setError(e);
+        setError(e, note);
         if (logEvent != null) {
             plausible(logEvent, { props: { message: (e as Error).message || e } });
         }
@@ -226,7 +227,7 @@ $gmapsDirectionsButton.addEventListener('click', async () => {
             })),
             mode,
         });
-    });
+    }, 'are you using "current location"? then this page cannot find it, please use exact location in Google Maps.');
     jsonContents = points;
     document.querySelector<HTMLHeadingElement>(
         '#gmaps-directions-text'
@@ -304,6 +305,7 @@ $fetchMetadataButton.addEventListener('click', async () => {
                 // Kilometers to miles
                 frameDensity: $frameDensityInput.valueAsNumber * 1.60934,
             }),
+        null,
         'fetched-metadata-error'
     );
     populateStats();
@@ -393,6 +395,7 @@ const handleBuildButton = async (mode: string) => {
                 mode: mode as 'fast' | 'med' | 'slow',
                 optimize: $optimizeCheckbox.checked,
             }),
+        null,
         'build-hyperlapse-error'
     );
     if (result != null) {

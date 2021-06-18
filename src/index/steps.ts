@@ -65,9 +65,12 @@ export const setLoadingText = (text: string, index?: number) => {
         updateProgressText();
     }
 };
-export const setError = (err: Error | string) => {
+export const setError = (err: Error | string, note?: string) => {
     showLoader();
     $loadingProgressText.innerText = `Error: ${(err as Error).message || err}`;
+    if (note != null) {
+        $loadingProgressText.innerText += `\nNote: ${note}`;
+    }
     inError = true;
 };
 export const hideLoader = () => {
