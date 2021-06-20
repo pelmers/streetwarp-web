@@ -6914,10 +6914,10 @@ robust-predicates@^2.0.4:
   resolved "https://registry.yarnpkg.com/robust-predicates/-/robust-predicates-2.0.4.tgz#0a2367a93abd99676d075981707f29cfb402248b"
   integrity sha512-l4NwboJM74Ilm4VKfbAtFeGq7aEjWL+5kVFcmgFA2MrdnQWx9iE/tUGvxY5HyMI7o/WpSIUFLbC5fbeaHgSCYg==
 
-roots-rpc@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/roots-rpc/-/roots-rpc-2.0.0.tgz#7afde95512ccd7e0df03f6cb13c5a1cc9fee4585"
-  integrity sha512-6eBqIzmwE2H0qrhXvah1sYEMEuw9hxZCP0jv+k8D+yGUWcEYaXwHtnvD4l6hpEo1q3uSqNNLljVBHqVY4BdjZA==
+roots-rpc@2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/roots-rpc/-/roots-rpc-2.0.1.tgz#a492448286685d852b31075c2de02c3e1f4c7652"
+  integrity sha512-1SqFgFPkqVpx9WqRTEKzKSY4n6BkkrbErrDMppjdEJqivXIdqDzKyAzgOLGRSL5DMYogGdpxvJ/hkK03tVmjYQ==
   dependencies:
     fp-ts "^2.10.4"
     io-ts "^2.2.16"

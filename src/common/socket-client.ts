@@ -68,6 +68,10 @@ const connect = () => {
     getMapboxKey = client.connect(ServerCalls.GetMapboxKey);
     buildHyperlapse = client.connect(ServerCalls.BuildHyperlapse);
 
-    socket.onclose = connect;
+    socket.onclose = () => {
+        client.dispose();
+        server.dispose();
+        connect();
+    };
 };
 connect();

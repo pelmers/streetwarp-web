@@ -11,7 +11,7 @@ import {
 } from './rpcCalls';
 import child_process from 'child_process';
 import readline from 'readline';
-import { d, FRAME_LIMIT_PER_VIDEO, r } from './constants';
+import { d, r } from './constants';
 
 async function writeInputToTmpFolder(
     contents: string,
@@ -96,8 +96,6 @@ async function buildHyperlapse(
         frameDensity.toString(),
         '--json',
         '--print-metadata',
-        '--max-frames',
-        FRAME_LIMIT_PER_VIDEO.toString(),
         '--minterp',
         minterp,
         '--output-dir',

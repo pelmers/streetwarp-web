@@ -1,10 +1,5 @@
 import util from 'util';
-import {
-    d,
-    FRAME_LIMIT_PER_VIDEO,
-    PROGRESS_WS_PATH,
-    WS_DOMAIN_NAME,
-} from './constants';
+import { d, PROGRESS_WS_PATH, WS_DOMAIN_NAME } from './constants';
 import {
     FetchMetadataOutput,
     TBuildHyperlapseInput,
@@ -15,7 +10,9 @@ import { isRight } from 'fp-ts/lib/Either';
 
 import aws from 'aws-sdk';
 
-const FUNCTION_VERSION = 48;
+const FUNCTION_VERSION = 52;
+// Longer routes are chunked and processed in parts of this size.
+const FRAME_LIMIT_PER_VIDEO = 600;
 
 type EntryParams = {
     key: string;
