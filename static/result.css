@@ -104,3 +104,10 @@ button {
 #footer a {
     margin-right: 2em;
 }
+
+#error {
+    display: none;
+    font-size: 36px;
+    font-weight: bold;
+    color: red;
+}

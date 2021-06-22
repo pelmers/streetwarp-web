@@ -89,9 +89,12 @@ const fixBearingDomain = (b: number) => {
     return b;
 };
 
-// TODO show error if these fetches fail
-Promise.all([getMapboxKey(), fetchExistingMetadata({ key })]).then(
-    async ([token, metadataResult]) => {
+async function main() {
+    try {
+        const [token, metadataResult] = await Promise.all([
+            getMapboxKey(),
+            fetchExistingMetadata({ key }),
+        ]);
         // @ts-ignore gotta assign it once
         mapboxgl.accessToken = token;
         metadata = metadataResult;
@@ -127,7 +130,7 @@ Promise.all([getMapboxKey(), fetchExistingMetadata({ key })]).then(
             },
         });
         let lastFrame: number | undefined;
-        const updateIcon = (t: number) => {
+        const updateIcon = () => {
             // NaN if the video hasn't loaded yet, so skip
             if (isNaN($video.duration)) {
                 requestAnimationFrame(updateIcon);
@@ -182,8 +185,12 @@ Promise.all([getMapboxKey(), fetchExistingMetadata({ key })]).then(
             requestAnimationFrame(updateIcon);
         };
         requestAnimationFrame(updateIcon);
+    } catch (e) {
+        document.querySelector<HTMLDivElement>('#error').innerText = `Error: ${
+            e.message || e
+        }`;
     }
-);
+}
 
 let followMode = true;
 document
@@ -211,3 +218,5 @@ document
             map.fitBounds(findBounds(metadata));
         }
     });
+
+main();

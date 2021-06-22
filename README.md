@@ -46,4 +46,4 @@ MAPBOX_API_KEY
 
 ### Future Plans
 
--   Additional connections to other services for route import, such as Garmin, RideWithGPS, and Google Maps.
+-   None at the moment, feel free to open issues for feature requests
