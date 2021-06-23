@@ -10,7 +10,7 @@ import { isRight } from 'fp-ts/lib/Either';
 
 import aws from 'aws-sdk';
 
-const FUNCTION_VERSION = 52;
+const FUNCTION_VERSION = 53;
 // Longer routes are chunked and processed in parts of this size.
 const FRAME_LIMIT_PER_VIDEO = 600;
 
