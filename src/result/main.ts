@@ -19,7 +19,7 @@ const parts = window.location.pathname.split('/').filter((p) => p.length > 0);
 const key = parts[parts.length - 1];
 document
     .querySelector<HTMLImageElement>('#logo')
-    .addEventListener('click', () => (window.location.href = 'https://streetwarp.ml/'));
+    .addEventListener('click', () => (window.location.href = 'https://streetwarp.com/'));
 let showDrop = false;
 const $dropContent = document.querySelector<HTMLDivElement>('.dropdown-content');
 const $dropBtn = document.querySelector<HTMLButtonElement>('.dropbtn');

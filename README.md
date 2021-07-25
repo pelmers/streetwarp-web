@@ -1,6 +1,6 @@
-[![Logo](static/logo.png)](https://streetwarp.ml/)
+[![Logo](static/logo.png)](https://streetwarp.com/)
 
-## Website: [streetwarp.ml](https://streetwarp.ml)
+## Website: [streetwarp.com](https://streetwarp.com)
 
 ## Example:
 

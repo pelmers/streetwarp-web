@@ -12,4 +12,4 @@ export const BROWSER_CALLS_SERVER = 'bcs';
 
 export const PROGRESS_WS_PATH = 'progress-connection';
 export const RPC_WS_PATH = 'rpc';
-export const WS_DOMAIN_NAME = 'wss://streetwarp.ml';
+export const WS_DOMAIN_NAME = 'wss://streetwarp.com';
