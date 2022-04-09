@@ -321,12 +321,12 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
                 metadataPath,
                 JSON.stringify(metadataResult)
             );
-            const url = `/result/${key}/?src=${encodeURIComponent(
-                remoteUrl.replace(
-                    'https://streetwarpstorage.blob.core.windows.net',
-                    'https://streetwarpvideo.azureedge.net'
-                )
-            )}`;
+            let url = `/result/${key}/`;
+            // streetwarpstorage URL is already known to the client as the default,
+            // so only if it is different, then we pass it
+            if (!remoteUrl.includes('https://streetwarpstorage.blob.core.windows.net')) {
+                url += `?src=${encodeURIComponent(remoteUrl)}`;
+            }
             d(`Returning hyperlapse result: ${url}`);
             return { url };
         } finally {
