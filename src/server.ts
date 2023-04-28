@@ -22,6 +22,7 @@ import {
 import {
     r,
     d,
+    e,
     BROWSER_CALLS_SERVER,
     SERVER_CALLS_BROWSER,
     PROGRESS_WS_PATH,
@@ -104,7 +105,6 @@ Other required environment variables: GOOGLE_API_KEY, MAPBOX_API_KEY
 
     wss.on('connection', (socket, req) => {
         const pathname = url.parse(req.url).pathname;
-        d(`received client connection on ${req.url}`);
         if (pathname === '/' + PROGRESS_WS_PATH) {
             handleProgressConnection(socket, req);
         } else if (pathname === '/' + RPC_WS_PATH) {
@@ -131,13 +131,14 @@ function handleProgressConnection(socket: ws, req: IncomingMessage) {
             d(`Received progress for disconnected client ${key}`);
         }
     });
-    socket.on(
-        'close',
-        () =>
+    socket.on('close', () =>
+        d(
             `Progress Client ${id} (${JSON.stringify(
                 req.connection.remoteAddress
             )}) disconnected`
+        )
     );
+    socket.on('error', (err) => d(`Progress Client ${id} error: ${err}`));
 }
 
 function handleRpcConnection(socket: ws, req: IncomingMessage) {
@@ -149,11 +150,15 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
     const client = new RpcClient(new WebsocketTransport(socket, SERVER_CALLS_BROWSER));
     const sendProgress = client.connect(ClientCalls.ReceiveProgress);
 
-    server.register(ServerCalls.FetchMetadata, async (msg) => {
+    const serverRegister: typeof server.register = (call, func) =>
+        server.register(call, e(func, { errorPrefix: call.name }));
+
+    serverRegister(ServerCalls.FetchMetadata, async (msg) => {
         const key = uuid.v4().slice(0, 8);
         knownKeys.add(key);
         sendProgressByKey.set(key, sendProgress);
         try {
+            d(`Attempt to fetch metadata for ${key}`);
             const result = useLambda
                 ? await LambdaMethods.fetchMetadata(msg, {
                       key,
@@ -173,13 +178,13 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
         }
     });
 
-    server.register(ServerCalls.FetchExistingMetadata, async ({ key }) => {
+    serverRegister(ServerCalls.FetchExistingMetadata, async ({ key }) => {
         d(`Attempt to retrieve metadata for ${key}`);
         const metadataPath = r(`video/${key}.json`);
         return JSON.parse((await util.promisify(fs.readFile)(metadataPath)).toString());
     });
 
-    server.register(ServerCalls.GetStravaStatus, async (msg) => {
+    serverRegister(ServerCalls.GetStravaStatus, async (msg) => {
         if (!msg.response) {
             return {
                 result: {
@@ -194,6 +199,7 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
             throw new Error('App not given permission to read activities');
         }
         const stravaResponse = await stravaApi.oauth.getToken(code);
+        d(`Received Strava auth for ${stravaResponse.athlete.profile}`);
         return {
             result: {
                 profile: {
@@ -205,11 +211,12 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
         };
     });
 
-    server.register(ServerCalls.LoadStravaActivity, async (msg) => {
+    serverRegister(ServerCalls.LoadStravaActivity, async (msg) => {
         const { id, token, t } = msg;
         // @ts-ignore strava api has wrong typings
         const client = new stravaApi.client(token);
         if (t === 'activity') {
+            d(`Loading Strava activity ${id}`);
             const [activity, streams] = await Promise.all([
                 client.activities.get({ id }),
                 client.streams.activity({ id, types: 'latlng' }),
@@ -225,13 +232,13 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
             };
         } else {
             // TODO get route, not in strava node api https://github.com/UnbounDev/node-strava-v3/issues/107
-            throw new Error(
-                'Routes are not supported yet (see https://github.com/UnbounDev/node-strava-v3/issues/107)'
-            );
+            // TODO: added to api now, need to implement here
+            throw new Error('Routes are not supported yet, sorry!');
         }
     });
 
-    server.register(ServerCalls.LoadRWGPSRoute, async (msg) => {
+    serverRegister(ServerCalls.LoadRWGPSRoute, async (msg) => {
+        d(`Loading route ${msg.id} from RideWithGPS`);
         const response = await fetch(
             `https://ridewithgps.com/routes/${msg.id}.gpx?sub_format=track`
         );
@@ -256,7 +263,8 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
         };
     });
 
-    server.register(ServerCalls.LoadGMapsRoute, async ({ waypoints, mode }) => {
+    serverRegister(ServerCalls.LoadGMapsRoute, async ({ waypoints, mode }) => {
+        d(`Loading route with ${waypoints.length} points from Google Maps`);
         const start = waypoints[0];
         const dest = waypoints[waypoints.length - 1];
         const encodedWaypoints =
@@ -289,9 +297,9 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
         return { name, km, points: JSON.stringify(points) };
     });
 
-    server.register(ServerCalls.GetMapboxKey, async () => mapboxApiKey);
+    serverRegister(ServerCalls.GetMapboxKey, async () => mapboxApiKey);
 
-    server.register(ServerCalls.BuildHyperlapse, async (msg) => {
+    serverRegister(ServerCalls.BuildHyperlapse, async (msg) => {
         const key = uuid.v4().slice(0, 8);
         sendProgressByKey.set(key, sendProgress);
         knownKeys.add(key);
@@ -324,7 +332,9 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
             let url = `/result/${key}/`;
             // streetwarpstorage URL is already known to the client as the default,
             // so only if it is different, then we pass it
-            if (!remoteUrl.includes('https://streetwarpstorage.blob.core.windows.net')) {
+            if (
+                !remoteUrl.includes('https://streetwarpstorage.blob.core.windows.net')
+            ) {
                 url += `?src=${encodeURIComponent(remoteUrl)}`;
             }
             d(`Returning hyperlapse result: ${url}`);
@@ -344,6 +354,10 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
         for (const key of knownKeys) {
             sendProgressByKey.delete(key);
         }
+    });
+
+    socket.on('error', (err) => {
+        d(`Client error: ${err}`);
     });
 }
 
