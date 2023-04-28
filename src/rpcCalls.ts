@@ -49,7 +49,7 @@ const GetStravaStatusOutput = t.type({
 });
 
 const LoadStravaActivityInput = t.type({
-    id: t.number,
+    id: t.string,
     t: t.union([t.literal('route'), t.literal('activity')]),
     token: t.string,
 });

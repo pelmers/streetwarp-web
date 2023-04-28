@@ -189,7 +189,7 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
             return {
                 result: {
                     requestURL: await stravaApi.oauth.getRequestAccessURL({
-                        scope: 'read,activity:read,activity:read_all',
+                        scope: 'read,read_all,activity:read,activity:read_all',
                     }),
                 },
             };
@@ -199,7 +199,7 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
             throw new Error('App not given permission to read activities');
         }
         const stravaResponse = await stravaApi.oauth.getToken(code);
-        d(`Received Strava auth for ${stravaResponse.athlete.profile}`);
+        d(`Received Strava auth for user id ${stravaResponse.athlete.id}`);
         return {
             result: {
                 profile: {
@@ -218,7 +218,7 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
         if (t === 'activity') {
             d(`Loading Strava activity ${id}`);
             const [activity, streams] = await Promise.all([
-                client.activities.get({ id }),
+                client.activities.get({ id: Number.parseInt(id) }),
                 client.streams.activity({ id, types: 'latlng' }),
             ]);
             const latlngs = (streams as any[]).find(({ type }) => type === 'latlng')
@@ -230,10 +230,30 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
                     (latlngs as number[][]).map(([lat, lng]) => ({ lat, lng }))
                 ),
             };
+        } else if (t === 'route') {
+            d(`Loading Strava route ${id}`);
+            const gpxContents = await new Promise((resolve, reject) => {
+                client.routes.getFile({id, file_type: 'gpx'}, (err: Error | undefined, contents: string | undefined) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(contents);
+                    }
+                });
+            });
+            const gpx = new gpxParser();
+            gpx.parse(gpxContents);
+            const distance = gpx.tracks[0].distance.total;
+            const points = JSON.stringify(
+                gpx.tracks[0].points.map((p: any) => ({ lat: p.lat, lng: p.lon }))
+            );
+            return {
+                name: gpx.metadata.name,
+                km: distance / 1000,
+                points,
+            };
         } else {
-            // TODO get route, not in strava node api https://github.com/UnbounDev/node-strava-v3/issues/107
-            // TODO: added to api now, need to implement here
-            throw new Error('Routes are not supported yet, sorry!');
+            throw new Error(`Unknown Strava type ${t}`);
         }
     });
 

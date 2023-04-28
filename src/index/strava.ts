@@ -32,7 +32,7 @@ export async function loadActivity(
     }
     return loadStravaActivity({
         t: isRoute ? 'route' : 'activity',
-        id: Number.parseInt(match),
+        id: match,
         token: stravaAccessToken,
     });
 }

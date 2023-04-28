@@ -30,7 +30,7 @@ export let getStravaStatus: (arg0: {
 }) => any;
 export let loadStravaActivity: (arg0: {
     t: string;
-    id: number;
+    id: string;
     token: string;
 }) =>
     | { name: string; km: number; points: string }
