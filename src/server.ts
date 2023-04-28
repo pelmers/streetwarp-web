@@ -233,13 +233,16 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
         } else if (t === 'route') {
             d(`Loading Strava route ${id}`);
             const gpxContents = await new Promise((resolve, reject) => {
-                client.routes.getFile({id, file_type: 'gpx'}, (err: Error | undefined, contents: string | undefined) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(contents);
+                client.routes.getFile(
+                    { id, file_type: 'gpx' },
+                    (err: Error | undefined, contents: string | undefined) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(contents);
+                        }
                     }
-                });
+                );
             });
             const gpx = new gpxParser();
             gpx.parse(gpxContents);
