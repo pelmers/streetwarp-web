@@ -74,6 +74,10 @@
     border-color: #a5a5a5;
 }
 
+#gpx-dragdrop.dragEnter {
+    background-color: #ae200043;
+}
+
 #api-notes {
     font-size: 0.8em;
     display: none;

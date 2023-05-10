@@ -245,15 +245,20 @@ const $gpxInput = document.querySelector<HTMLInputElement>('#gpx-input');
 const $gpxButton = document.querySelector<HTMLButtonElement>('#gpx-button');
 const $gpxDragDrop = document.querySelector<HTMLDivElement>('#gpx-dragdrop');
 $gpxButton.addEventListener('click', () => $gpxInput.click());
+$gpxDragDrop.addEventListener('click', (e) => {
+    $gpxInput.click();
+});
 $gpxDragDrop.addEventListener('dragenter', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+    (e.target as Element).classList.add('dragEnter');
 });
 $gpxDragDrop.addEventListener('dragexit', (e) => {
+    (e.target as Element).classList.remove('dragEnter');
+});
+$gpxDragDrop.addEventListener('dragover', (e) => {
     e.preventDefault();
     e.stopPropagation();
 });
-$gpxDragDrop.addEventListener('drag', (e) => {
+$gpxDragDrop.addEventListener('drop', (e) => {
     e.preventDefault();
     e.stopPropagation();
     handleFiles(e.dataTransfer.files);
