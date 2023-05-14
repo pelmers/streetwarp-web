@@ -11,7 +11,7 @@ const clientConfig = {
     mode: process.env.BUILD_MODE || 'development',
     entry: {
         index: './index/main.ts',
-        result: './result/main.ts',
+        result: './result/main.tsx',
     },
 
     output: {
@@ -20,7 +20,7 @@ const clientConfig = {
     },
 
     resolve: {
-        extensions: ['.ts', '.js'],
+        extensions: ['.ts', '.js', '.tsx'],
         modules: [ROOT, 'node_modules'],
     },
 
@@ -42,7 +42,7 @@ const clientConfig = {
             },
             {
                 enforce: 'pre',
-                test: /\.ts$/,
+                test: /\.tsx?$/,
                 exclude: /node_modules/,
                 use: 'tslint-loader',
             },
@@ -51,7 +51,7 @@ const clientConfig = {
              * LOADERS
              *****************/
             {
-                test: /\.ts$/,
+                test: /\.tsx?$/,
                 exclude: [/node_modules/],
                 use: 'ts-loader',
             },
