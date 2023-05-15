@@ -6,7 +6,13 @@ import {
     SERVER_CALLS_BROWSER,
     WS_DOMAIN_NAME,
 } from '../constants';
-import { ServerCalls, TBuildHyperlapseInput } from '../rpcCalls';
+import {
+    ServerCalls,
+    TBuildHyperlapseOutput,
+    TFetchMetadataOutput,
+    TGetStravaStatusOutput,
+} from '../rpcCalls';
+import { AsyncFN } from 'roots-rpc/dist/rpcTypes';
 
 export let client: RpcClient;
 export let server: RpcServer;
@@ -24,34 +30,55 @@ export let fetchMetadata: (arg0: {
     gpsPoints: { lat: number; lng: number; bearing: number }[];
     originalPoints: { lat: number; lng: number; bearing: number }[];
 }>;
-export let fetchExistingMetadata: (arg0: { key: string }) => any;
+
+export let fetchExistingMetadata: AsyncFN<
+    { key: string },
+    {
+        frames: number;
+        distance: number;
+        averageError: number;
+        gpsPoints: { lat: number; lng: number; bearing: number }[];
+        originalPoints: { lat: number; lng: number; bearing: number }[];
+    }
+>;
 export let getStravaStatus: (arg0: {
     response: { code: string; acceptedScopes: string };
-}) => any;
-export let loadStravaActivity: (arg0: {
-    t: string;
-    id: string;
-    token: string;
-}) =>
-    | { name: string; km: number; points: string }
-    | PromiseLike<{ name: string; km: number; points: string }>;
-export let loadRWGPSRoute: (arg0: {
-    id: number;
-}) =>
-    | { name: string; km: number; points: string }
-    | PromiseLike<{ name: string; km: number; points: string }>;
-export let loadGMapsRoute: (arg0: {
-    waypoints: any;
-    mode: any;
-}) => Promise<{ name: any; km: any; points: any }>;
-export let getMapboxKey: () => Promise<string>;
+}) => Promise<TGetStravaStatusOutput>;
+export let loadStravaActivity:
+    | AsyncFN<
+          { id: string; t: 'route' | 'activity'; token: string },
+          { name: string; km: number; points: string }
+      >
+    | ((arg0: {
+          t: string;
+          id: string;
+          token: string;
+      }) =>
+          | { name: string; km: number; points: string }
+          | PromiseLike<{ name: string; km: number; points: string }>);
+export let loadRWGPSRoute:
+    | AsyncFN<{ id: number }, { name: string; km: number; points: string }>
+    | ((arg0: {
+          id: number;
+      }) =>
+          | { name: string; km: number; points: string }
+          | PromiseLike<{ name: string; km: number; points: string }>);
+export let loadGMapsRoute: AsyncFN<
+    {
+        waypoints: { lat: number; lng: number; bearing: number }[];
+        mode: 'bicycling' | 'driving' | 'walking' | 'transit';
+    },
+    { name: string; km: number; points: string }
+>;
+
+export let getMapboxKey: AsyncFN<null, string>;
 export let buildHyperlapse: (arg0: {
     apiKey: string;
     input: { contents: string; extension: 'json' };
     frameDensity: number;
     mode: 'fast' | 'med' | 'slow';
     optimize: boolean;
-}) => Promise<{ url: string }>;
+}) => Promise<TBuildHyperlapseOutput>;
 
 const connect = () => {
     const socket = new ws(`${WS_DOMAIN_NAME}/${RPC_WS_PATH}`);

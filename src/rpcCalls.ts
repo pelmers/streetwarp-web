@@ -8,6 +8,7 @@ const LatLng = t.type({
     lat: t.number,
     lng: t.number,
     bearing: optional(t.number),
+    // TODO: add elevation
 });
 const FetchMetadataInput = t.type({
     input: t.type({
@@ -47,6 +48,7 @@ const GetStravaStatusOutput = t.type({
         t.type({ requestURL: t.string }),
     ]),
 });
+export type TGetStravaStatusOutput = t.TypeOf<typeof GetStravaStatusOutput>;
 
 const LoadStravaActivityInput = t.type({
     id: t.string,
@@ -86,6 +88,7 @@ const BuildHyperlapseInput = t.type({
 });
 export type TBuildHyperlapseInput = t.TypeOf<typeof BuildHyperlapseInput>;
 const BuildHyperlapseOutput = t.type({ url: t.string });
+export type TBuildHyperlapseOutput = t.TypeOf<typeof BuildHyperlapseOutput>;
 
 export const ServerCalls = {
     FetchMetadata: () => ({

@@ -24,33 +24,44 @@
     <body>
         <img id="logo" src="/static/logo.png" alt="StreetWarp Web" />
         <div id="container">
-            <video
-                id="video"
-                width="640"
-                height="480"
-                controls
-                preload="metadata"
-            ></video>
-            <div id="map-container"></div>
+            <div id="video-side">
+                <ul>
+                    <li>
+                        Playback speed:
+                        <button class="dropbtn">1x</button>
+                        <div class="dropdown-content">
+                            <p>0.25x</p>
+                            <p>0.33x</p>
+                            <p>0.5x</p>
+                            <p>1x</p>
+                            <p>2x</p>
+                            <p>3x</p>
+                        </div>
+                    </li>
+                </ul>
+                <video
+                    id="video"
+                    width="640"
+                    height="480"
+                    controls
+                    preload="metadata"
+                ></video>
+            </div>
+            <div id="gpx-replay-container-container">
+                <a
+                    href="https://gpx.pelmers.com"
+                    target="_href"
+                    style="width: calc(2em * 5); margin: auto; display: block"
+                    ><img
+                        src="https://gpx.pelmers.com/static/logo.png"
+                        alt="GPX Replay Logo"
+                        style="height: 2em; margin: auto"
+                /></a>
+                <div id="gpx-replay-container"></div>
+            </div>
         </div>
         <div id="error"></div>
         <ul>
-            <li>
-                Playback speed:
-                <button class="dropbtn">1x</button>
-                <div class="dropdown-content">
-                    <p>0.25x</p>
-                    <p>0.33x</p>
-                    <p>0.5x</p>
-                    <p>1x</p>
-                    <p>2x</p>
-                    <p>3x</p>
-                </div>
-            </li>
-            <li>
-                <button id="followcambtn">Toggle FollowCam</button>
-            </li>
-            <li>Gray line = GPS track, (thicker) Blue line = Streetview track</li>
             <li>Note: Videos are deleted automatically after 72 hours</li>
             <li>Right-click video and download to save it</li>
         </ul>

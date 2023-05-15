@@ -369,7 +369,11 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
     });
 
     socket.on('close', () => {
-        d(`Client(${JSON.stringify(req.headers['user-agent'])}) disconnected, killing ${runningProcesses.length} processes`);
+        d(
+            `Client(${JSON.stringify(
+                req.headers['user-agent']
+            )}) disconnected, killing ${runningProcesses.length} processes`
+        );
         // If client socket disconnects, cancel any running streetwarp calls (only applies to local mode, not Lambda)
         for (const proc of runningProcesses) {
             proc.kill('SIGKILL');

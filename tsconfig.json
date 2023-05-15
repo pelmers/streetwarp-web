@@ -5,6 +5,7 @@
         }
     },
     "compilerOptions": {
+        "jsx": "react",
         "outDir": "./dist/",
         "sourceMap": true,
         "noImplicitAny": true,
