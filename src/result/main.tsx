@@ -115,9 +115,9 @@ async function main() {
         createMapInContainer(token);
         animationLoop();
     } catch (e) {
-        document.querySelector<HTMLDivElement>('#error').innerText = `Error: ${
-            e.message || e
-        }`;
+        const errorDiv = document.querySelector<HTMLDivElement>('#error');
+        errorDiv.innerText = `Error: ${e.message || e}`;
+        errorDiv.style.display = 'block';
     }
 }
 
