@@ -37,6 +37,7 @@ import gpxParser from 'gpxparser';
 import { IncomingMessage } from 'http';
 import fetch from 'node-fetch';
 import { RpcClient, RpcServer, WebsocketTransport } from 'roots-rpc';
+import { jsonToGPX } from './common/gpxFormatting';
 
 consoleStamp(console);
 const useLambda =
@@ -219,16 +220,26 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
             d(`Loading Strava activity ${id}`);
             const [activity, streams] = await Promise.all([
                 client.activities.get({ id: Number.parseInt(id) }),
-                client.streams.activity({ id, types: 'latlng' }),
+                // Get latlng and altitude streams
+                client.streams.activity({ id, types: 'latlng,altitude' }),
             ]);
             const latlngs = (streams as any[]).find(({ type }) => type === 'latlng')
                 .data;
+            const elevations = (streams as any[]).find(
+                ({ type }) => type === 'altitude'
+            ).data;
+            // Zip together into objects of {lat, lng, ele}
+            const latlngsWithElevation = (latlngs as [number, number][]).map(
+                ([lat, lng], i) => ({
+                    lat,
+                    lng,
+                    ele: elevations[i],
+                })
+            );
             return {
                 name: activity.name,
                 km: activity.distance / 1000,
-                points: JSON.stringify(
-                    (latlngs as number[][]).map(([lat, lng]) => ({ lat, lng }))
-                ),
+                gpx: jsonToGPX(activity.name, latlngsWithElevation),
             };
         } else if (t === 'route') {
             d(`Loading Strava route ${id}`);
@@ -247,13 +258,10 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
             const gpx = new gpxParser();
             gpx.parse(gpxContents);
             const distance = gpx.tracks[0].distance.total;
-            const points = JSON.stringify(
-                gpx.tracks[0].points.map((p: any) => ({ lat: p.lat, lng: p.lon }))
-            );
             return {
                 name: gpx.metadata.name,
                 km: distance / 1000,
-                points,
+                gpx: gpxContents as string,
             };
         } else {
             throw new Error(`Unknown Strava type ${t}`);
@@ -276,13 +284,10 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
         const gpxContents = await response.text();
         gpx.parse(gpxContents);
         const distance = gpx.tracks[0].distance.total;
-        const points = JSON.stringify(
-            gpx.tracks[0].points.map((p: any) => ({ lat: p.lat, lng: p.lon }))
-        );
         return {
             name: gpx.metadata.name,
             km: distance / 1000,
-            points,
+            gpx: gpxContents,
         };
     });
 
@@ -317,7 +322,7 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
                 km += step.distance.value / 1000;
             }
         }
-        return { name, km, points: JSON.stringify(points) };
+        return { name, km, gpx: jsonToGPX(name, points) };
     });
 
     serverRegister(ServerCalls.GetMapboxKey, async () => mapboxApiKey);

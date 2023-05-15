@@ -19,9 +19,7 @@ export let server: RpcServer;
 
 // This type spaghetti is what happens with 'infer types' LOL
 export let fetchMetadata: (arg0: {
-    input:
-        | { contents: string; extension: 'json' }
-        | { contents: string; extension: 'gpx' };
+    input: { contents: string; extension: 'gpx' };
     frameDensity: number;
 }) => Promise<{
     frames: number;
@@ -47,28 +45,28 @@ export let getStravaStatus: (arg0: {
 export let loadStravaActivity:
     | AsyncFN<
           { id: string; t: 'route' | 'activity'; token: string },
-          { name: string; km: number; points: string }
+          { name: string; km: number; gpx: string }
       >
     | ((arg0: {
           t: string;
           id: string;
           token: string;
       }) =>
-          | { name: string; km: number; points: string }
-          | PromiseLike<{ name: string; km: number; points: string }>);
+          | { name: string; km: number; gpx: string }
+          | PromiseLike<{ name: string; km: number; gpx: string }>);
 export let loadRWGPSRoute:
-    | AsyncFN<{ id: number }, { name: string; km: number; points: string }>
+    | AsyncFN<{ id: number }, { name: string; km: number; gpx: string }>
     | ((arg0: {
           id: number;
       }) =>
-          | { name: string; km: number; points: string }
-          | PromiseLike<{ name: string; km: number; points: string }>);
+          | { name: string; km: number; gpx: string }
+          | PromiseLike<{ name: string; km: number; gpx: string }>);
 export let loadGMapsRoute: AsyncFN<
     {
         waypoints: { lat: number; lng: number; bearing: number }[];
         mode: 'bicycling' | 'driving' | 'walking' | 'transit';
     },
-    { name: string; km: number; points: string }
+    { name: string; km: number; gpx: string }
 >;
 
 export let getMapboxKey: AsyncFN<null, string>;

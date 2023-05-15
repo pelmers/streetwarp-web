@@ -4,6 +4,7 @@ import {
     loadGMapsRoute,
     server,
 } from '../common/socket-client';
+import { DOMAIN } from '../constants';
 import { ClientCalls, TFetchMetadataOutput } from '../rpcCalls';
 import { loadRoute } from './rwgps';
 import {
@@ -72,7 +73,7 @@ document
     .querySelector<HTMLImageElement>('#logo')
     .addEventListener(
         'click',
-        () => (window.location.href = 'https://streetwarp.com/')
+        () => (window.location.href = `https://${DOMAIN}/`)
     );
 
 // STEP 1: GET GPX FILE DATA
@@ -125,7 +126,6 @@ getStravaResult((e) => {
     }
 });
 
-let jsonContents: string;
 $stravaActivityButton.addEventListener('click', async () => {
     if (isProcessing()) {
         return;
@@ -133,10 +133,10 @@ $stravaActivityButton.addEventListener('click', async () => {
     hideStepsAfter(0);
     setLoadingStage('Loading Activity');
     showLoader();
-    const { name, km, points } = await catchWithProgress(() =>
+    const { name, km, gpx } = await catchWithProgress(() =>
         loadActivity($stravaActivityInput.value, stravaAccessToken)
     );
-    jsonContents = points;
+    gpxContents = Promise.resolve(gpx);
     document.querySelector<HTMLHeadingElement>(
         '#strava-activity-text'
     ).textContent = `${name}: ${km.toFixed(2)} km`;
@@ -172,10 +172,10 @@ $rwgpsLogoButton.addEventListener('click', () => {
 $rwgpsActivityButton.addEventListener('click', async () => {
     setLoadingStage('Loading Route');
     showLoader();
-    const { name, km, points } = await catchWithProgress(() =>
+    const { name, km, gpx } = await catchWithProgress(() =>
         loadRoute($rwgpsActivityInput.value)
     );
-    jsonContents = points;
+    gpxContents = Promise.resolve(gpx);
     document.querySelector<HTMLHeadingElement>(
         '#rwgps-activity-text'
     ).textContent = `${name}: ${km.toFixed(2)} km`;
@@ -211,7 +211,7 @@ $gmapsLogoButton.addEventListener('click', () => {
 $gmapsDirectionsButton.addEventListener('click', async () => {
     setLoadingStage('Loading Route from directions');
     showLoader();
-    const { name, km, points } = await catchWithProgress(() => {
+    const { name, km, gpx } = await catchWithProgress(() => {
         const url = $gmapsDirectionsInput.value;
         const gmdp = new Gmdp(url);
         const { route, transportation } = gmdp.getRoute();
@@ -231,7 +231,7 @@ $gmapsDirectionsButton.addEventListener('click', async () => {
             mode,
         });
     }, 'are you using "current location"? then this page cannot find it, please use exact location in Google Maps.');
-    jsonContents = points;
+    gpxContents = Promise.resolve(gpx);
     document.querySelector<HTMLHeadingElement>(
         '#gmaps-directions-text'
     ).textContent = `${name}: ${km.toFixed(2)} km`;
@@ -302,10 +302,7 @@ $fetchMetadataButton.addEventListener('click', async () => {
     }
     hideStepsAfter(1);
     showLoader();
-    const input =
-        jsonContents != null
-            ? { contents: jsonContents, extension: 'json' as const }
-            : { contents: await gpxContents, extension: 'gpx' as const };
+    const input = { contents: await gpxContents, extension: 'gpx' as const };
     metadataResult = await catchWithProgress(
         () =>
             fetchMetadata({

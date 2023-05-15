@@ -5,6 +5,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { MapComponent } from 'gpx-replay-react';
+import { DOMAIN } from '../constants';
 
 const clamp = (num: number, lo: number, hi: number) =>
     num < lo ? lo : num > hi ? hi : num;
@@ -16,7 +17,7 @@ document
     .querySelector<HTMLImageElement>('#logo')
     .addEventListener(
         'click',
-        () => (window.location.href = 'https://streetwarp.com/')
+        () => (window.location.href = `https://${DOMAIN}/`)
     );
 let showDrop = false;
 const $dropContent = document.querySelector<HTMLDivElement>('.dropdown-content');

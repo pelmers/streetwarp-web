@@ -2,6 +2,8 @@ import path from 'path';
 
 const DEBUG_LOG = true;
 
+export const DOMAIN = 'streetwarp.com';
+
 export const repoRoot = path.resolve(__filename, '..');
 export const r = (relative: string) => path.resolve(repoRoot, relative);
 export const d = DEBUG_LOG
@@ -41,4 +43,4 @@ export const BROWSER_CALLS_SERVER = 'bcs';
 
 export const PROGRESS_WS_PATH = 'progress-connection';
 export const RPC_WS_PATH = 'rpc';
-export const WS_DOMAIN_NAME = 'wss://streetwarp.com';
+export const WS_DOMAIN_NAME = `wss://${DOMAIN}`;

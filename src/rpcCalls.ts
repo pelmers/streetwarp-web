@@ -13,7 +13,7 @@ const LatLng = t.type({
 const FetchMetadataInput = t.type({
     input: t.type({
         contents: t.string,
-        extension: t.union([t.literal('json'), t.literal('gpx')]),
+        extension: t.literal('gpx'),
     }),
     frameDensity: t.number,
 });
@@ -59,7 +59,7 @@ const LoadStravaActivityInput = t.type({
 const LoadStravaActivityOutput = t.type({
     name: t.string,
     km: t.number,
-    points: t.string,
+    gpx: t.string,
 });
 export type TLoadStravaActivityOutput = t.TypeOf<typeof LoadStravaActivityOutput>;
 
