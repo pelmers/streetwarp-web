@@ -4487,10 +4487,10 @@ globby@^6.1.0:
     pify "^2.0.0"
     pinkie-promise "^2.0.0"
 
-gpx-replay-react@0.0.2:
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/gpx-replay-react/-/gpx-replay-react-0.0.2.tgz#32d9de788254d717c86d857cb95c7e16853b7502"
-  integrity sha512-FTf4Sap4vXwLPi+00yoSU34sWREE9jnWO0Z984w2Vss0LY1IGD4dPyXua8XcNCUR16Zymjsm4A8p5Vh8TADWpg==
+gpx-replay-react@0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/gpx-replay-react/-/gpx-replay-react-0.0.3.tgz#9f74cfecfd2b44f0276e2150c6467326c7a0b298"
+  integrity sha512-IE292Y4HWRCrB1o7GPhPC3EurZiHhijdExJXfy97YsCaOwQqXclOFVSq6kJtMU4RXcrySj8gR0F9vfMvSH6bXw==
 
 gpxparser@^3.0.7:
   version "3.0.7"
