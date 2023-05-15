@@ -71,10 +71,7 @@ $exampleLink.addEventListener('click', () => {
 });
 document
     .querySelector<HTMLImageElement>('#logo')
-    .addEventListener(
-        'click',
-        () => (window.location.href = `https://${DOMAIN}/`)
-    );
+    .addEventListener('click', () => (window.location.href = `https://${DOMAIN}/`));
 
 // STEP 1: GET GPX FILE DATA
 const $stravaLogoButton = document.querySelector<HTMLButtonElement>('#strava-button');

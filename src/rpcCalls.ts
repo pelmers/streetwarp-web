@@ -8,7 +8,7 @@ const LatLng = t.type({
     lat: t.number,
     lng: t.number,
     bearing: optional(t.number),
-    // TODO: add elevation
+    ele: optional(t.number),
 });
 const FetchMetadataInput = t.type({
     input: t.type({
@@ -29,6 +29,8 @@ export const FetchMetadataOutput = t.type({
     averageError: t.number,
     gpsPoints: t.array(LatLng),
     originalPoints: t.array(LatLng),
+    name: optional(t.string),
+    fileSizeBytes: optional(t.number),
 });
 export type TFetchMetadataOutput = t.TypeOf<typeof FetchMetadataOutput>;
 const GetStravaStatusInput = t.type({

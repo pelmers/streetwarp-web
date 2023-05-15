@@ -44,6 +44,8 @@ STRAVA_CLIENT_SECRET
 MAPBOX_API_KEY
 ```
 
-### Future Plans
+### Recent Changes
 
--   None at the moment, feel free to open issues for feature requests
+-   Integration with [GPX Replay](https://gpx.pelmers.com) for more interactive map display
+-   Display elevation profile on results for supported routes
+-   Renamed "quality" button to "smooth"

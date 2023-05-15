@@ -21,24 +21,9 @@ export let server: RpcServer;
 export let fetchMetadata: (arg0: {
     input: { contents: string; extension: 'gpx' };
     frameDensity: number;
-}) => Promise<{
-    frames: number;
-    distance: number;
-    averageError: number;
-    gpsPoints: { lat: number; lng: number; bearing: number }[];
-    originalPoints: { lat: number; lng: number; bearing: number }[];
-}>;
+}) => Promise<TFetchMetadataOutput>;
 
-export let fetchExistingMetadata: AsyncFN<
-    { key: string },
-    {
-        frames: number;
-        distance: number;
-        averageError: number;
-        gpsPoints: { lat: number; lng: number; bearing: number }[];
-        originalPoints: { lat: number; lng: number; bearing: number }[];
-    }
->;
+export let fetchExistingMetadata: AsyncFN<{ key: string }, TFetchMetadataOutput>;
 export let getStravaStatus: (arg0: {
     response: { code: string; acceptedScopes: string };
 }) => Promise<TGetStravaStatusOutput>;

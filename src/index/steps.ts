@@ -15,6 +15,10 @@ export const hideStepsAfter = (after: number) => {
 };
 export const showNextStep = () => {
     ($steps[++stepIndex] as HTMLLIElement).style.display = 'list-item';
+    if (stepIndex === 1) {
+        // Then also hide the "features" section
+        document.querySelector<HTMLDivElement>('#features').style.display = 'none';
+    }
 };
 
 let inProcessing = false;

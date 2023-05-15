@@ -7,18 +7,20 @@ import { createRoot } from 'react-dom/client';
 import { MapComponent } from 'gpx-replay-react';
 import { DOMAIN } from '../constants';
 
-const clamp = (num: number, lo: number, hi: number) =>
-    num < lo ? lo : num > hi ? hi : num;
+const clamp = (num: number, lo: number, hi: number) => {
+    // If NaN, return lo
+    if (num !== num) {
+        return lo;
+    }
+    return num < lo ? lo : num > hi ? hi : num;
+};
 
 const $video = document.querySelector<HTMLVideoElement>('#video');
 const parts = window.location.pathname.split('/').filter((p) => p.length > 0);
 const key = parts[parts.length - 1];
 document
     .querySelector<HTMLImageElement>('#logo')
-    .addEventListener(
-        'click',
-        () => (window.location.href = `https://${DOMAIN}/`)
-    );
+    .addEventListener('click', () => (window.location.href = `https://${DOMAIN}/`));
 let showDrop = false;
 const $dropContent = document.querySelector<HTMLDivElement>('.dropdown-content');
 const $dropBtn = document.querySelector<HTMLButtonElement>('.dropbtn');
@@ -64,24 +66,23 @@ const positionUpdateRef = React.createRef<(position: number, deltaS: number) => 
 function createMapInContainer(token: string) {
     const root = createRoot(document.querySelector('#gpx-replay-container')!);
     // If all metadata gps points do not have ele key, then do not show elevation profile
-    // const showElevationProfile = !metadata.gpsPoints.every((p) => p.ele == null);
-    const showElevationProfile = false;
+    const showElevationProfile = !metadata.gpsPoints.every((p) => p.ele == null);
     root.render(
         <MapComponent
             playbackFPS={30}
             bindKeys={false}
             mapboxAccessToken={token}
             gpxInfo={{
-                name: key,
+                name: metadata.name || key,
                 distance: {
                     total: metadata.distance,
                 },
                 points: metadata.gpsPoints.map((p) => ({
                     lat: p.lat,
                     lon: p.lng,
-                    ele: 0,
+                    ele: p.ele,
                 })),
-                sizeBytes: 0,
+                sizeBytes: metadata.fileSizeBytes || 0,
             }}
             positionUpdateFunctionRef={positionUpdateRef}
             showElevationProfile={showElevationProfile}

@@ -63,9 +63,9 @@ button {
 }
 
 #video {
-    width: 640px;
+    width: calc(100% - 30px) !important;
     max-width: 52vw;
-    padding-right: 10px;
+    margin: auto;
 }
 
 #gpx-replay-container-container {
@@ -113,4 +113,8 @@ button {
     font-size: 36px;
     font-weight: bold;
     color: red;
+}
+
+.map-container-container {
+    max-width: calc(100% - 30px) !important;
 }

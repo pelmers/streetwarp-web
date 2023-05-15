@@ -32,13 +32,17 @@
             >Hyperlapse GPX routes using Google Streetview
             <a id="example" href="#">(what does that look like?)</a></i
         >
-        <p style="font-size: smaller; font-weight: 600">
-            <i>New feature: Strava routes supported!</i>
-            <i
-                >New feature: Results powered by
-                <a href="https://gpx.pelmers.com">GPX Replay</a>!</i
-            >
-        </p>
+        <ul style="font-size: smaller; font-weight: 600" id="features">
+            <li><i>New feature: Strava routes supported!</i></li>
+            <li>
+                <i
+                    >New feature: Results map powered by
+                    <a href="https://gpx.pelmers.com">GPX Replay</a>!</i
+                >
+            </li>
+
+            <li><i>New feature: Elevation graph on result (not for Google Maps)</i></li>
+        </ul>
 
         <ol id="steps">
             <li>
@@ -149,7 +153,7 @@
                 >
                 <div style="display: flex">
                     <button id="fast-button">Fast</button>
-                    <button id="slow-button">Quality</button>
+                    <button id="slow-button">Smooth</button>
                 </div>
                 <input id="optimize-checkbox" type="checkbox" checked /><i
                     >Try to remove sudden jumps from result (may not always be
