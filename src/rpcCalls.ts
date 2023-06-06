@@ -125,6 +125,10 @@ export const ServerCalls = {
         i: BuildHyperlapseInput,
         o: BuildHyperlapseOutput,
     }),
+    GetDurationSinceVideoCreation: () => ({
+        i: FetchExistingMetadataInput,
+        o: t.type({ durationMs: t.number }),
+    }),
 };
 
 export type ProgressPayload =

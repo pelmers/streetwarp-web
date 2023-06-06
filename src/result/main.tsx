@@ -1,4 +1,8 @@
-import { fetchExistingMetadata, getMapboxKey } from '../common/socket-client';
+import {
+    fetchExistingMetadata,
+    getDurationSinceVideoCreation,
+    getMapboxKey,
+} from '../common/socket-client';
 import { TFetchMetadataOutput } from '../rpcCalls';
 
 import React from 'react';
@@ -6,6 +10,8 @@ import { createRoot } from 'react-dom/client';
 
 import { MapComponent } from 'gpx-replay-react';
 import { DOMAIN } from '../constants';
+
+import { HumanizeDurationLanguage, HumanizeDuration } from 'humanize-duration-ts';
 
 const clamp = (num: number, lo: number, hi: number) => {
     // If NaN, return lo
@@ -107,11 +113,21 @@ function animationLoop(timestampMS: number = 0) {
 
 async function main() {
     try {
-        const [token, metadataResult] = await Promise.all([
+        const [token, metadataResult, { durationMs }] = await Promise.all([
             getMapboxKey(),
             fetchExistingMetadata({ key }),
+            getDurationSinceVideoCreation({ key }),
         ]);
         metadata = metadataResult;
+        // Humanize creationMs duration
+        const humanizer = new HumanizeDuration(new HumanizeDurationLanguage());
+        const videoAgeTime = humanizer.humanize(durationMs, {
+            largest: 2,
+            round: true,
+        });
+        document.querySelector<HTMLSpanElement>(
+            '#video-age-value'
+        )!.innerText = videoAgeTime;
         createMapInContainer(token);
         animationLoop();
     } catch (e) {

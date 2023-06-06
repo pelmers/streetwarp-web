@@ -24,6 +24,10 @@ export let fetchMetadata: (arg0: {
 }) => Promise<TFetchMetadataOutput>;
 
 export let fetchExistingMetadata: AsyncFN<{ key: string }, TFetchMetadataOutput>;
+export let getDurationSinceVideoCreation: AsyncFN<
+    { key: string },
+    { durationMs: number }
+>;
 export let getStravaStatus: (arg0: {
     response: { code: string; acceptedScopes: string };
 }) => Promise<TGetStravaStatusOutput>;
@@ -71,6 +75,9 @@ const connect = () => {
 
     fetchMetadata = client.connect(ServerCalls.FetchMetadata);
     fetchExistingMetadata = client.connect(ServerCalls.FetchExistingMetadata);
+    getDurationSinceVideoCreation = client.connect(
+        ServerCalls.GetDurationSinceVideoCreation
+    );
     getStravaStatus = client.connect(ServerCalls.GetStravaStatus);
     loadStravaActivity = client.connect(ServerCalls.LoadStravaActivity);
     loadRWGPSRoute = client.connect(ServerCalls.LoadRWGPSRoute);

@@ -373,6 +373,13 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
         }
     });
 
+    serverRegister(ServerCalls.GetDurationSinceVideoCreation, async (msg) => {
+        // Return the time since video creation via the filesystem timestamp of the video metadata file
+        const metadataPath = r(`video/${msg.key}.json`);
+        const stat = await util.promisify(fs.stat)(metadataPath);
+        return { durationMs: Date.now() - stat.mtimeMs };
+    });
+
     socket.on('close', () => {
         d(
             `Client(${JSON.stringify(
