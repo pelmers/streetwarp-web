@@ -37,7 +37,7 @@
         "@types/ws": "^7.4.0",
         "browser-util-inspect": "^0.2.0",
         "copy-webpack-plugin": "~6",
-        "gpx-replay-react": "0.0.6",
+        "gpx-replay-react": "0.0.7",
         "humanize-duration-ts": "^2.1.1",
         "isomorphic-ws": "^4.0.1",
         "jasmine-core": "3.1.0",
