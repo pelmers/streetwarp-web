@@ -4,7 +4,9 @@
     <head>
         <meta charset="utf-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <title>Streetwarp Web | Create Hyperlapse videos from Street View along any route</title>
+        <title>
+            Streetwarp Web | Create Hyperlapse videos from Street View along any route
+        </title>
         <meta name="description" content="Hyperlapse routes with Google Street View.
         Turn any Google Maps link or GPX route into animated hyperlapse movies for free.
         With Strava and Google Maps integration."" />
@@ -34,18 +36,35 @@
         >
         <ul style="font-size: smaller; font-weight: 600" id="features">
             <li>
+                <i>New feature: see public videos (below)!</i>
+            </li>
+            <li>
                 <i
                     >New feature: Results map powered by
-                    <a href="https://gpx.pelmers.com" target="_blank"><b>GPX Replay</b></a>!</i
+                    <a href="https://gpx.pelmers.com" target="_blank"
+                        ><b>GPX Replay</b></a
+                    >!</i
                 >
             </li>
             <li>
                 <i
                     >Like map visualizations? Check out
-                    <a href="https://metro.pelmers.com" target="_blank"><b>Metro Lens</b></a>!</i
+                    <a href="https://metro.pelmers.com" target="_blank"
+                        ><b>Metro Lens</b></a
+                    >!</i
                 >
             </li>
         </ul>
+        <!-- man this really needs a rewrite in react... -->
+        <!-- show a list of recent public videos (click to open the list, like the demo example) -->
+        <div>
+            <i
+                ><a id="recent_results" href="#"
+                    >Public videos: See the latest Streetwarp creations (click for
+                    list)</a
+                ></i
+            >
+        </div>
 
         <ol id="steps">
             <li>
@@ -158,9 +177,13 @@
                     <button id="fast-button">Fast</button>
                     <button id="slow-button">Smooth</button>
                 </div>
-                <input id="optimize-checkbox" type="checkbox" checked /><i
+                <input id="optimize-checkbox" type="checkbox" checked/><i
                     >Try to remove sudden jumps from result (may not always be
                     better)</i
+                >
+                <br />
+                <input id="public-checkbox" type="checkbox" /><i
+                    >Make the video public (visible on home page)</i
                 >
             </li>
             <li>

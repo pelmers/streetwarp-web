@@ -65,7 +65,13 @@ export let buildHyperlapse: (arg0: {
     frameDensity: number;
     mode: 'fast' | 'med' | 'slow';
     optimize: boolean;
+    isPublic: boolean;
 }) => Promise<TBuildHyperlapseOutput>;
+
+export let getPublicVideos: AsyncFN<
+    null,
+    { videos: { key: string; url: string; name: string }[] }
+>;
 
 const connect = () => {
     const socket = new ws(`${WS_DOMAIN_NAME}/${RPC_WS_PATH}`);
@@ -84,6 +90,7 @@ const connect = () => {
     loadGMapsRoute = client.connect(ServerCalls.LoadGMapsRoute);
     getMapboxKey = client.connect(ServerCalls.GetMapboxKey);
     buildHyperlapse = client.connect(ServerCalls.BuildHyperlapse);
+    getPublicVideos = client.connect(ServerCalls.GetPublicVideos);
 
     socket.onclose = () => {
         client.dispose();

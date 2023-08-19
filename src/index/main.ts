@@ -1,6 +1,7 @@
 import {
     buildHyperlapse,
     fetchMetadata,
+    getPublicVideos,
     loadGMapsRoute,
     server,
 } from '../common/socket-client';
@@ -69,6 +70,32 @@ $exampleLink.addEventListener('click', () => {
     }
     exampleClicked = !exampleClicked;
 });
+
+const $recentResultsLink = document.querySelector<HTMLAnchorElement>('#recent_results');
+let recentResultsWasClicked = false;
+$recentResultsLink.addEventListener('click', async () => {
+    if (recentResultsWasClicked) {
+        return;
+    }
+    recentResultsWasClicked = true;
+    const { videos } = await catchWithProgress(() => getPublicVideos());
+    const ulElement = document.createElement('ul');
+    for (const { key, url, name } of videos) {
+        const liElement = document.createElement('li');
+        const aElement = document.createElement('a');
+        liElement.appendChild(aElement);
+        aElement.href = url;
+        aElement.textContent = `${name} (${key})`;
+        ulElement.appendChild(liElement);
+    }
+    $recentResultsLink.textContent = `${videos.length} videos found`;
+    // Append the list right after the link
+    $recentResultsLink.parentNode.insertBefore(
+        ulElement,
+        $recentResultsLink.nextSibling
+    );
+});
+
 document
     .querySelector<HTMLImageElement>('#logo')
     .addEventListener('click', () => (window.location.href = `https://${DOMAIN}/`));
@@ -357,6 +384,7 @@ const $slowBuildButton = document.querySelector<HTMLButtonElement>('#slow-button
 const $optimizeCheckbox = document.querySelector<HTMLInputElement>(
     '#optimize-checkbox'
 );
+const $publicCheckbox = document.querySelector<HTMLInputElement>('#public-checkbox');
 
 async function validateToken(token: string): Promise<void> {
     const response = await fetch(
@@ -396,6 +424,7 @@ const handleBuildButton = async (mode: string) => {
                 frameDensity: $frameDensityInput.valueAsNumber,
                 mode: mode as 'fast' | 'med' | 'slow',
                 optimize: $optimizeCheckbox.checked,
+                isPublic: $publicCheckbox.checked,
             }),
         null,
         'build-hyperlapse-error'

@@ -327,13 +327,42 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
 
     serverRegister(ServerCalls.GetMapboxKey, async () => mapboxApiKey);
 
+    serverRegister(ServerCalls.GetPublicVideos, async () => {
+        const videos = (await util.promisify(fs.readdir)(r('video'))).filter((vid) =>
+            vid.endsWith('.json')
+        );
+        const allMetadatas = Promise.all(
+            videos.map(async (video) => {
+                const metadataPath = r(`video/${video}`);
+                const metadata = JSON.parse(
+                    (await util.promisify(fs.readFile)(metadataPath)).toString()
+                ) as TFetchMetadataOutput;
+                const stat = await util.promisify(fs.stat)(metadataPath);
+                return { metadata, video, durationMs: Date.now() - stat.mtimeMs };
+            })
+        );
+        // Filter for all with creation date of less than 96 hours old, and isPublic: true
+        const filteredMetadatas = (await allMetadatas).filter(
+            ({ metadata, durationMs }) => {
+                return metadata.isPublic && durationMs < 96 * 60 * 60 * 1000;
+            }
+        );
+        return {
+            videos: filteredMetadatas.map(({ metadata, video }) => ({
+                key: video.slice(0, -5),
+                name: metadata.name,
+                url: `/result/${video.slice(0, -5)}`,
+            })),
+        };
+    });
+
     serverRegister(ServerCalls.BuildHyperlapse, async (msg) => {
         const key = uuid.v4().slice(0, 8);
         sendProgressByKey.set(key, sendProgress);
         knownKeys.add(key);
         try {
             const metadataPath = r(`video/${key}.json`);
-            let metadataResult: TFetchMetadataOutput;
+            let metadataResult: TFetchMetadataOutput & { isPublic?: boolean };
             d(
                 `Requesting hyperlapse [${key}], opt=${msg.optimize}, mode=${msg.mode}, density=${msg.frameDensity}`
             );
@@ -353,6 +382,7 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
                           metadataResult = msg as TFetchMetadataOutput;
                       },
                   });
+            metadataResult.isPublic = msg.isPublic;
             await util.promisify(fs.writeFile)(
                 metadataPath,
                 JSON.stringify(metadataResult)

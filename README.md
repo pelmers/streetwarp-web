@@ -46,6 +46,7 @@ MAPBOX_API_KEY
 
 ### Recent Changes
 
+-   Added option to make video public and list on home page
 -   Integration with [GPX Replay](https://gpx.pelmers.com) for more interactive map display
 -   Display elevation profile on results for supported routes
 -   Renamed "quality" button to "smooth"

@@ -31,6 +31,7 @@ export const FetchMetadataOutput = t.type({
     originalPoints: t.array(LatLng),
     name: optional(t.string),
     fileSizeBytes: optional(t.number),
+    isPublic: optional(t.boolean),
 });
 export type TFetchMetadataOutput = t.TypeOf<typeof FetchMetadataOutput>;
 const GetStravaStatusInput = t.type({
@@ -87,10 +88,21 @@ const BuildHyperlapseInput = t.type({
     }),
     mode: t.union([t.literal('fast'), t.literal('med'), t.literal('slow')]),
     optimize: t.boolean,
+    isPublic: t.boolean,
 });
 export type TBuildHyperlapseInput = t.TypeOf<typeof BuildHyperlapseInput>;
 const BuildHyperlapseOutput = t.type({ url: t.string });
 export type TBuildHyperlapseOutput = t.TypeOf<typeof BuildHyperlapseOutput>;
+
+const GetPublicVideosOutput = t.type({
+    videos: t.array(
+        t.type({
+            key: t.string,
+            name: t.string,
+            url: t.string,
+        })
+    ),
+});
 
 export const ServerCalls = {
     FetchMetadata: () => ({
@@ -120,6 +132,10 @@ export const ServerCalls = {
     GetMapboxKey: () => ({
         i: t.null,
         o: t.string,
+    }),
+    GetPublicVideos: () => ({
+        i: t.null,
+        o: GetPublicVideosOutput,
     }),
     BuildHyperlapse: () => ({
         i: BuildHyperlapseInput,
