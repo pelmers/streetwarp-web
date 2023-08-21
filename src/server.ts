@@ -11,6 +11,7 @@ import favicon from 'serve-favicon';
 import consoleStamp from 'console-stamp';
 import ws from 'ws';
 import { decode, encode, LatLng } from '@googlemaps/polyline-codec';
+import memoize from 'memoizee';
 
 import {
     ServerCalls,
@@ -327,34 +328,7 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
 
     serverRegister(ServerCalls.GetMapboxKey, async () => mapboxApiKey);
 
-    serverRegister(ServerCalls.GetPublicVideos, async () => {
-        const videos = (await util.promisify(fs.readdir)(r('video'))).filter((vid) =>
-            vid.endsWith('.json')
-        );
-        const allMetadatas = Promise.all(
-            videos.map(async (video) => {
-                const metadataPath = r(`video/${video}`);
-                const metadata = JSON.parse(
-                    (await util.promisify(fs.readFile)(metadataPath)).toString()
-                ) as TFetchMetadataOutput;
-                const stat = await util.promisify(fs.stat)(metadataPath);
-                return { metadata, video, durationMs: Date.now() - stat.mtimeMs };
-            })
-        );
-        // Filter for all with creation date of less than 96 hours old, and isPublic: true
-        const filteredMetadatas = (await allMetadatas).filter(
-            ({ metadata, durationMs }) => {
-                return metadata.isPublic && durationMs < 96 * 60 * 60 * 1000;
-            }
-        );
-        return {
-            videos: filteredMetadatas.map(({ metadata, video }) => ({
-                key: video.slice(0, -5),
-                name: metadata.name,
-                url: `/result/${video.slice(0, -5)}`,
-            })),
-        };
-    });
+    serverRegister(ServerCalls.GetPublicVideos, getPublicVideos);
 
     serverRegister(ServerCalls.BuildHyperlapse, async (msg) => {
         const key = uuid.v4().slice(0, 8);
@@ -429,5 +403,49 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
         d(`Client error: ${err}`);
     });
 }
+
+async function _getPublicVideos() {
+    const videos = (await util.promisify(fs.readdir)(r('video'))).filter((vid) =>
+        vid.endsWith('.json')
+    );
+    const allMetadatas = (
+        await Promise.all(
+            videos.map(async (video) => {
+                const metadataPath = r(`video/${video}`);
+                try {
+                    const metadata = JSON.parse(
+                        (await util.promisify(fs.readFile)(metadataPath)).toString()
+                    ) as TFetchMetadataOutput;
+                    const stat = await util.promisify(fs.stat)(metadataPath);
+                    return {
+                        metadata,
+                        video,
+                        durationMs: Date.now() - stat.mtimeMs,
+                    };
+                } catch (e) {
+                    return null;
+                }
+            })
+        )
+    ).filter((x) => x != null);
+    // Filter for all with creation date of less than 96 hours old, and isPublic: true
+    const filteredMetadatas = allMetadatas.filter(({ metadata, durationMs }) => {
+        return metadata.isPublic && durationMs < 96 * 60 * 60 * 1000;
+    });
+    return {
+        videos: filteredMetadatas.map(({ metadata, video }) => ({
+            key: video.slice(0, -5),
+            name: metadata.name,
+            url: `/result/${video.slice(0, -5)}`,
+        })),
+    };
+}
+
+// Cache for 5 minutes
+const getPublicVideos = memoize(_getPublicVideos, {
+    promise: true,
+    maxAge: 1000 * 60 * 5,
+    preFetch: true,
+});
 
 main();

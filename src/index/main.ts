@@ -34,6 +34,7 @@ async function withProgress<O>(f: () => Promise<O>): Promise<O> {
         return null;
     });
     try {
+        setLoadingText('Loading...');
         return await f();
     } finally {
         hideLoader();
