@@ -1,4 +1,3 @@
-import child_process from 'child_process';
 import readline from 'readline';
 import fs from 'fs';
 import url from 'url';
@@ -11,7 +10,6 @@ import favicon from 'serve-favicon';
 import consoleStamp from 'console-stamp';
 import ws from 'ws';
 import { decode, encode, LatLng } from '@googlemaps/polyline-codec';
-import memoize from 'memoizee';
 
 import {
     ServerCalls,
@@ -24,12 +22,12 @@ import {
     r,
     d,
     e,
+    eStderrQuiet,
     BROWSER_CALLS_SERVER,
     SERVER_CALLS_BROWSER,
     PROGRESS_WS_PATH,
     RPC_WS_PATH,
 } from './constants';
-import LocalMethods from './streetwarp-local';
 import LambdaMethods from './streetwarp-lambda';
 // @ts-ignore no types for this api
 import stravaApi from 'strava-v3';
@@ -146,7 +144,6 @@ function handleProgressConnection(socket: ws, req: IncomingMessage) {
 function handleRpcConnection(socket: ws, req: IncomingMessage) {
     d(`Client(${JSON.stringify(req.headers['user-agent'])}) connected to ${req.url}`);
 
-    const runningProcesses: child_process.ChildProcess[] = [];
     const knownKeys = new Set<string>();
     const server = new RpcServer(new WebsocketTransport(socket, BROWSER_CALLS_SERVER));
     const client = new RpcClient(new WebsocketTransport(socket, SERVER_CALLS_BROWSER));
@@ -161,18 +158,10 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
         sendProgressByKey.set(key, sendProgress);
         try {
             d(`Attempt to fetch metadata for ${key}`);
-            const result = useLambda
-                ? await LambdaMethods.fetchMetadata(msg, {
-                      key,
-                      googleApiKey,
-                  })
-                : await LocalMethods.fetchMetadata(msg, {
-                      cmd: streetwarpBin,
-                      googleApiKey,
-                      key,
-                      onProgress: sendProgress,
-                      onProcess: runningProcesses.push.bind(runningProcesses),
-                  });
+            const result = await LambdaMethods.fetchMetadata(msg, {
+                key,
+                googleApiKey,
+            });
             return result;
         } finally {
             sendProgressByKey.delete(key);
@@ -340,22 +329,13 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
             d(
                 `Requesting hyperlapse [${key}], opt=${msg.optimize}, mode=${msg.mode}, density=${msg.frameDensity}`
             );
-            const remoteUrl = useLambda
-                ? await LambdaMethods.buildHyperlapse(
-                      msg,
-                      { googleApiKey: msg.apiKey, key },
-                      (metadata) => (metadataResult = metadata)
-                  )
-                : await LocalMethods.buildHyperlapse(msg, {
-                      cmd: streetwarpBin,
-                      googleApiKey: msg.apiKey,
-                      onProcess: runningProcesses.push.bind(runningProcesses),
-                      onProgress: sendProgress,
-                      key,
-                      onMessage: (msg) => {
-                          metadataResult = msg as TFetchMetadataOutput;
-                      },
-                  });
+            const remoteUrl = await LambdaMethods.buildHyperlapse(
+                msg,
+                { googleApiKey: msg.apiKey, key },
+                (metadata) => (metadataResult = metadata)
+            );
+
+            d(`Hyperlapse [${key}] complete, saved to remote URL ${remoteUrl}`);
             metadataResult.isPublic = msg.isPublic;
             await util.promisify(fs.writeFile)(
                 metadataPath,
@@ -385,15 +365,8 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
     });
 
     socket.on('close', () => {
-        d(
-            `Client(${JSON.stringify(
-                req.headers['user-agent']
-            )}) disconnected, killing ${runningProcesses.length} processes`
-        );
-        // If client socket disconnects, cancel any running streetwarp calls (only applies to local mode, not Lambda)
-        for (const proc of runningProcesses) {
-            proc.kill('SIGKILL');
-        }
+        d(`Client(${JSON.stringify(req.headers['user-agent'])}) disconnected`);
+        // TODO: on disconnect kill any running lambda streetwarp processes
         for (const key of knownKeys) {
             sendProgressByKey.delete(key);
         }
@@ -404,7 +377,7 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
     });
 }
 
-async function _getPublicVideos() {
+const _getPublicVideos = eStderrQuiet(async () => {
     const videos = (await util.promisify(fs.readdir)(r('video'))).filter((vid) =>
         vid.endsWith('.json')
     );
@@ -439,13 +412,15 @@ async function _getPublicVideos() {
             url: `/result/${video.slice(0, -5)}`,
         })),
     };
-}
-
-// Cache for 5 minutes
-const getPublicVideos = memoize(_getPublicVideos, {
-    promise: true,
-    maxAge: 1000 * 60 * 5,
-    preFetch: true,
 });
+
+let _publicVideosCache: ReturnType<typeof _getPublicVideos> = _getPublicVideos();
+// Every 5 minutes update the public videos cache, and delete expired videos from cloudflare
+setInterval(async () => {
+    _publicVideosCache = _getPublicVideos();
+    // TODO: delete expired videos from cloudflare
+}, 5 * 60 * 1000);
+
+const getPublicVideos = () => _publicVideosCache;
 
 main();

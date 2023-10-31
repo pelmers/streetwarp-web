@@ -155,6 +155,7 @@ async function buildHyperlapse(
         if (msg.optimize) {
             args.push(
                 '--optimizer-arg',
+                // options documented at https://github.com/pelmers/streetwarp-cli/blob/9c6513705c812a5d70d4595eafa166541de95a15/path_optimizer/main.py#L20-L25
                 JSON.stringify({
                     ratio_test: 0.71,
                     n_features: 350,

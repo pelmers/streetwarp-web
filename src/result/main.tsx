@@ -61,7 +61,7 @@ $dropBtn.addEventListener('click', (e) => {
 });
 
 let metadata: TFetchMetadataOutput | undefined;
-const defaultSrc = `https://streetwarpvideo.azureedge.net/output/${key}.mp4`;
+const defaultSrc = `https://streetwarpstorage.blob.core.windows.net/output/${key}.mp4`;
 const urlParamSrc = new URLSearchParams(window.location.search).get('src');
 $video.src = urlParamSrc != null && urlParamSrc.length > 0 ? urlParamSrc : defaultSrc;
 
