@@ -10,6 +10,10 @@ import favicon from 'serve-favicon';
 import consoleStamp from 'console-stamp';
 import ws from 'ws';
 import { decode, encode, LatLng } from '@googlemaps/polyline-codec';
+import { chain } from 'stream-chain';
+import { parser } from 'stream-json';
+import { ignore } from 'stream-json/filters/Ignore';
+import { streamValues } from 'stream-json/streamers/StreamValues';
 
 import {
     ServerCalls,
@@ -386,31 +390,46 @@ const _getPublicVideos = eStderrQuiet(async () => {
             videos.map(async (video) => {
                 const metadataPath = r(`video/${video}`);
                 try {
-                    const metadata = JSON.parse(
-                        (await util.promisify(fs.readFile)(metadataPath)).toString()
-                    ) as TFetchMetadataOutput;
+                    const parsingPipeline = chain([
+                        fs.createReadStream(metadataPath),
+                        parser(),
+                        streamValues(),
+                        // Remove the gps points from metadata to reduce peak memory usage
+                        // (and since we don't need it to display the video list)
+                        ignore({ filter: 'gpsPoints' }),
+                        ignore({ filter: 'originalPoints' }),
+                    ]);
+                    const metadata = (await new Promise((resolve, reject) => {
+                        parsingPipeline.on('data', ({ value }) => resolve(value));
+                        parsingPipeline.on('end', () =>
+                            reject(new Error('No metadata found'))
+                        );
+                        parsingPipeline.on('error', reject);
+                    })) as TFetchMetadataOutput;
                     const stat = await util.promisify(fs.stat)(metadataPath);
                     return {
-                        metadata,
+                        metadata: { ...metadata, gpsPoints: [], originalPoints: [] },
                         video,
-                        durationMs: Date.now() - stat.mtimeMs,
+                        durationSinceCreation: Date.now() - stat.mtimeMs,
                     };
                 } catch (e) {
+                    console.error(`Error reading metadata for ${video}: ${e}`);
                     return null;
                 }
             })
         )
     ).filter((x) => x != null);
-    // Filter for all with creation date of less than 96 hours old, and isPublic: true
-    const filteredMetadatas = allMetadatas.filter(({ metadata, durationMs }) => {
-        return metadata.isPublic && durationMs < 96 * 60 * 60 * 1000;
-    });
     return {
-        videos: filteredMetadatas.map(({ metadata, video }) => ({
-            key: video.slice(0, -5),
-            name: metadata.name,
-            url: `/result/${video.slice(0, -5)}`,
-        })),
+        videos: allMetadatas
+            // Filter for all with creation date of less than 96 hours old, and isPublic: true
+            .filter(({ metadata, durationSinceCreation }) => {
+                return metadata.isPublic && durationSinceCreation < 96 * 60 * 60 * 1000;
+            })
+            .map(({ metadata, video }) => ({
+                key: video.slice(0, -5),
+                name: metadata.name,
+                url: `/result/${video.slice(0, -5)}`,
+            })),
     };
 });
 
@@ -418,7 +437,6 @@ let _publicVideosCache: ReturnType<typeof _getPublicVideos> = _getPublicVideos()
 // Every 5 minutes update the public videos cache, and delete expired videos from cloudflare
 setInterval(async () => {
     _publicVideosCache = _getPublicVideos();
-    // TODO: delete expired videos from cloudflare
 }, 5 * 60 * 1000);
 
 const getPublicVideos = () => _publicVideosCache;
