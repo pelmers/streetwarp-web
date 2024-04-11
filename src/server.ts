@@ -385,7 +385,8 @@ const _getPublicVideos = eStderrQuiet(async () => {
     const videos = (await util.promisify(fs.readdir)(r('video'))).filter((vid) =>
         vid.endsWith('.json')
     );
-    const allMetadatas = (
+    const cacheRefreshStart = Date.now();
+    const metadatas = (
         await Promise.all(
             videos.map(async (video) => {
                 const metadataPath = r(`video/${video}`);
@@ -393,11 +394,11 @@ const _getPublicVideos = eStderrQuiet(async () => {
                     const parsingPipeline = chain([
                         fs.createReadStream(metadataPath),
                         parser(),
-                        streamValues(),
                         // Remove the gps points from metadata to reduce peak memory usage
                         // (and since we don't need it to display the video list)
                         ignore({ filter: 'gpsPoints' }),
                         ignore({ filter: 'originalPoints' }),
+                        streamValues(),
                     ]);
                     const metadata = (await new Promise((resolve, reject) => {
                         parsingPipeline.on('data', ({ value }) => resolve(value));
@@ -418,18 +419,23 @@ const _getPublicVideos = eStderrQuiet(async () => {
                 }
             })
         )
-    ).filter((x) => x != null);
+    )
+        .filter((x) => x != null)
+        // Filter for all with creation date of less than 96 hours old, and isPublic: true
+        .filter(({ metadata, durationSinceCreation }) => {
+            return metadata.isPublic && durationSinceCreation < 96 * 60 * 60 * 1000;
+        });
+    console.log(
+        `Public videos cache refreshed ${metadatas.length} new public videos in ${
+            Date.now() - cacheRefreshStart
+        }ms`
+    );
     return {
-        videos: allMetadatas
-            // Filter for all with creation date of less than 96 hours old, and isPublic: true
-            .filter(({ metadata, durationSinceCreation }) => {
-                return metadata.isPublic && durationSinceCreation < 96 * 60 * 60 * 1000;
-            })
-            .map(({ metadata, video }) => ({
-                key: video.slice(0, -5),
-                name: metadata.name,
-                url: `/result/${video.slice(0, -5)}`,
-            })),
+        videos: metadatas.map(({ metadata, video }) => ({
+            key: video.slice(0, -5),
+            name: metadata.name,
+            url: `/result/${video.slice(0, -5)}`,
+        })),
     };
 });
 
