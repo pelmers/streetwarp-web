@@ -386,9 +386,24 @@ const _getPublicVideos = eStderrQuiet(async () => {
         vid.endsWith('.json')
     );
     const cacheRefreshStart = Date.now();
-    const metadatas = (
+    const recentVideos = (
         await Promise.all(
             videos.map(async (video) => {
+                // Filter for all with creation date of less than 96 hours old, and isPublic: true
+                const metadataPath = r(`video/${video}`);
+                const stat = await util.promisify(fs.stat)(metadataPath);
+                const durationSinceCreation = Date.now() - stat.mtimeMs;
+                if (durationSinceCreation < 96 * 60 * 60 * 1000) {
+                    return video;
+                } else {
+                    return null;
+                }
+            })
+        )
+    ).filter((x) => x != null);
+    const metadatas = (
+        await Promise.all(
+            recentVideos.map(async (video) => {
                 const metadataPath = r(`video/${video}`);
                 try {
                     const parsingPipeline = chain([
@@ -407,11 +422,9 @@ const _getPublicVideos = eStderrQuiet(async () => {
                         );
                         parsingPipeline.on('error', reject);
                     })) as TFetchMetadataOutput;
-                    const stat = await util.promisify(fs.stat)(metadataPath);
                     return {
                         metadata: { ...metadata, gpsPoints: [], originalPoints: [] },
                         video,
-                        durationSinceCreation: Date.now() - stat.mtimeMs,
                     };
                 } catch (e) {
                     console.error(`Error reading metadata for ${video}: ${e}`);
@@ -421,10 +434,7 @@ const _getPublicVideos = eStderrQuiet(async () => {
         )
     )
         .filter((x) => x != null)
-        // Filter for all with creation date of less than 96 hours old, and isPublic: true
-        .filter(({ metadata, durationSinceCreation }) => {
-            return metadata.isPublic && durationSinceCreation < 96 * 60 * 60 * 1000;
-        });
+        .filter(({ metadata }) => metadata.isPublic);
     console.log(
         `Public videos cache refreshed ${metadatas.length} new public videos in ${
             Date.now() - cacheRefreshStart
@@ -440,10 +450,10 @@ const _getPublicVideos = eStderrQuiet(async () => {
 });
 
 let _publicVideosCache: ReturnType<typeof _getPublicVideos> = _getPublicVideos();
-// Every 60 minutes update the public videos cache
+// Every 5 minutes update the public videos cache
 setInterval(async () => {
     _publicVideosCache = _getPublicVideos();
-}, 60 * 60 * 1000);
+}, 5 * 60 * 1000);
 
 const getPublicVideos = () => _publicVideosCache;
 

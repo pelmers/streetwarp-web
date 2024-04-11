@@ -4,28 +4,54 @@
     {
       "commentRange": {
         "start": {
-          "line": 423,
+          "line": 389,
           "char": 58
         },
         "end": {
-          "line": 423,
+          "line": 389,
           "char": 70
         }
       },
       "codeRange": {
         "start": {
-          "line": 425,
-          "char": 64
+          "line": 393,
+          "char": 36
         },
         "end": {
-          "line": 425,
-          "char": 83
+          "line": 393,
+          "char": 55
         }
       },
       "codeRelativePath": "",
       "commentValue": "96 hours old",
       "codeValue": "96 * 60 * 60 * 1000",
       "id": 0
+    },
+    {
+      "commentRange": {
+        "start": {
+          "line": 452,
+          "char": 9
+        },
+        "end": {
+          "line": 452,
+          "char": 18
+        }
+      },
+      "codeRange": {
+        "start": {
+          "line": 455,
+          "char": 3
+        },
+        "end": {
+          "line": 455,
+          "char": 17
+        }
+      },
+      "codeRelativePath": "",
+      "commentValue": "5 minutes",
+      "codeValue": "5 * 60 * 1000)",
+      "id": 1
     }
   ],
   "configuration": {
