@@ -440,10 +440,10 @@ const _getPublicVideos = eStderrQuiet(async () => {
 });
 
 let _publicVideosCache: ReturnType<typeof _getPublicVideos> = _getPublicVideos();
-// Every 5 minutes update the public videos cache, and delete expired videos from cloudflare
+// Every 60 minutes update the public videos cache
 setInterval(async () => {
     _publicVideosCache = _getPublicVideos();
-}, 5 * 60 * 1000);
+}, 60 * 60 * 1000);
 
 const getPublicVideos = () => _publicVideosCache;
 
