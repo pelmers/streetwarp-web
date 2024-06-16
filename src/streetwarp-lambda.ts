@@ -63,7 +63,7 @@ async function callLambda(
         callbackEndpoint: `${WS_DOMAIN_NAME}/${PROGRESS_WS_PATH}`,
     };
     const client = new aws.Lambda();
-    d(`Invoking lambda function with params: ${JSON.stringify(params)}`);
+    d('Invoking lambda function');
     const response: aws.Lambda.InvocationResponse = await util.promisify(
         client.invoke.bind(client)
     )({
