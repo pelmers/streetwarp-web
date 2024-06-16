@@ -357,7 +357,7 @@ function populateStats() {
     $gpxStatsList.innerHTML = `
     <li>Total distance: <b>${(distance / 1000).toFixed(2)} km</b></li>
     <li>Number of images: <b>${frames}</b> (${(frames / 30).toFixed(2)}s video)</li>
-    <li>Average error (between image and GPX locations): <b>${averageError.toFixed(
+    <li>Average error (between StreetView image and GPX locations): <b>${averageError.toFixed(
         2
     )} m</b></li>
     `;
@@ -401,6 +401,19 @@ async function validateToken(token: string): Promise<void> {
     plausible('token-validated');
 }
 
+function getSelectedRegion() {
+    var radios = document.getElementsByName(
+        'uploadRegion'
+    ) as NodeListOf<HTMLInputElement>;
+    for (var i = 0, length = radios.length; i < length; i++) {
+        if (radios[i].checked) {
+            return radios[i].value as 'na' | 'eu' | 'as';
+        }
+    }
+    // default to 'na'
+    return 'na' as const;
+}
+
 const handleBuildButton = async (mode: string) => {
     if (isProcessing()) {
         return;
@@ -426,6 +439,7 @@ const handleBuildButton = async (mode: string) => {
                 mode: mode as 'fast' | 'med' | 'slow',
                 optimize: $optimizeCheckbox.checked,
                 isPublic: $publicCheckbox.checked,
+                uploadRegion: getSelectedRegion(),
             }),
         null,
         'build-hyperlapse-error'

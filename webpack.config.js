@@ -1,3 +1,12 @@
+const crypto = require('crypto');
+
+if (parseInt(process.versions.node.split('.')[0]) >= 18) {
+    // Patch vulnerable usage of md4 in node 18
+    const crypto_orig_createHash = crypto.createHash;
+    crypto.createHash = (algorithm) =>
+        crypto_orig_createHash(algorithm == 'md4' ? 'sha256' : algorithm);
+}
+
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
 const CopyPlugin = require('copy-webpack-plugin');

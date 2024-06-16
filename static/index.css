@@ -182,7 +182,7 @@ input[type='text']:focus {
 }
 
 /* LABEL ======================================= */
-label {
+.apiKeyLabel {
     color: #999;
     font-size: 18px;
     font-weight: normal;
@@ -255,4 +255,22 @@ button {
     margin-bottom: 1.5rem;
     display: block;
     cursor: pointer;
+}
+
+input[type='radio']:checked ~ label {
+    background-color: #2c8898;
+    color: white;
+}
+
+.regionSelectDiv label {
+    align-self: center;
+}
+input[type='radio'] {
+    margin-right: 10px;
+}
+
+.regionSelectDiv div {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
 }

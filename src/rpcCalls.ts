@@ -87,6 +87,7 @@ const BuildHyperlapseInput = t.type({
         extension: t.union([t.literal('json'), t.literal('gpx')]),
     }),
     mode: t.union([t.literal('fast'), t.literal('med'), t.literal('slow')]),
+    uploadRegion: t.union([t.literal('na'), t.literal('eu'), t.literal('as')]),
     optimize: t.boolean,
     isPublic: t.boolean,
 });

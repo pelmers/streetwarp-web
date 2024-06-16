@@ -23,6 +23,7 @@ type BaseLambdaParams = {
     key: string;
     index?: number | null;
     callbackEndpoint?: string;
+    uploadRegion?: 'na' | 'eu' | 'as';
 };
 
 type StreetwarpParams = BaseLambdaParams & {
@@ -163,6 +164,9 @@ async function buildHyperlapse(
                 })
             );
         }
+        // If there is more than 1 worker then we will always upload to NA here because that's closest
+        // to the lambda function. The final join step will upload to the correct region.
+        const uploadRegion = workerCount === 1 ? msg.uploadRegion : 'na';
         lambdaCalls.push(
             callLambda({
                 key: params.key,
@@ -170,6 +174,7 @@ async function buildHyperlapse(
                 index: workerCount === 1 ? null : index,
                 args,
                 useOptimizer: msg.optimize,
+                uploadRegion,
                 ...msg.input,
             })
         );
@@ -193,6 +198,7 @@ async function buildHyperlapse(
         key: params.key,
         joinVideos: true,
         videoUrls: results.map((r) => r.videoResult.url),
+        uploadRegion: msg.uploadRegion,
     });
     return result.videoResult.url;
 }

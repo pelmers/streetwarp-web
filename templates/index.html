@@ -36,7 +36,7 @@
         >
         <ul style="font-size: smaller; font-weight: 600" id="features">
             <li>
-                <i>New feature: see public videos (below)!</i>
+                <i>New feature: Regional video storage, so faster video buffering!</i>
             </li>
             <li>
                 <i
@@ -160,7 +160,7 @@
                 Each Google account comes with $200 a month of free API usage!
                 <input type="text" id="api-key-input" required />
                 <span class="bar"></span>
-                <label>API Key</label>
+                <label class="apiKeyLabel">API Key</label>
             </li>
             <li>
                 <h4>Build Hyperlapse</h4>
@@ -173,6 +173,35 @@
                     target="_blank"
                     >here</a
                 >
+                <div
+                    style="display: flex; flex-direction: column"
+                    class="regionSelectDiv"
+                >
+                    <p><i>Video Upload Region:</i> Pick the one closest to you.</p>
+                    <div>
+                        <input
+                            type="radio"
+                            id="north-america"
+                            name="uploadRegion"
+                            value="na"
+                            checked
+                        />
+                        <label for="north-america">North America</label>
+                    </div>
+                    <div>
+                        <input
+                            type="radio"
+                            id="europe"
+                            name="uploadRegion"
+                            value="eu"
+                        />
+                        <label for="europe">Europe</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="asia" name="uploadRegion" value="as" />
+                        <label for="asia">Asia</label>
+                    </div>
+                </div>
                 <div style="display: flex">
                     <button id="fast-button">Fast</button>
                     <button id="slow-button">Smooth</button>

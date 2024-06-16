@@ -8,6 +8,7 @@ import {
 } from '../constants';
 import {
     ServerCalls,
+    TBuildHyperlapseInput,
     TBuildHyperlapseOutput,
     TFetchMetadataOutput,
     TGetStravaStatusOutput,
@@ -59,14 +60,9 @@ export let loadGMapsRoute: AsyncFN<
 >;
 
 export let getMapboxKey: AsyncFN<null, string>;
-export let buildHyperlapse: (arg0: {
-    apiKey: string;
-    input: { contents: string; extension: 'json' };
-    frameDensity: number;
-    mode: 'fast' | 'med' | 'slow';
-    optimize: boolean;
-    isPublic: boolean;
-}) => Promise<TBuildHyperlapseOutput>;
+export let buildHyperlapse: (
+    arg0: TBuildHyperlapseInput
+) => Promise<TBuildHyperlapseOutput>;
 
 export let getPublicVideos: AsyncFN<
     null,
