@@ -331,7 +331,7 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
             const metadataPath = r(`video/${key}.json`);
             let metadataResult: TFetchMetadataOutput & { isPublic?: boolean };
             d(
-                `Requesting hyperlapse [${key}], opt=${msg.optimize}, mode=${msg.mode}, density=${msg.frameDensity}`
+                `Requesting hyperlapse [${key}], opt=${msg.optimize}, mode=${msg.mode}, density=${msg.frameDensity}, uploadRegion=${msg.uploadRegion}`
             );
             const remoteUrl = await LambdaMethods.buildHyperlapse(
                 msg,
