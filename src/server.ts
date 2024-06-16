@@ -350,7 +350,7 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
             // streetwarpstorage URL is already known to the client as the default,
             // so only if it is different, then we pass it
             if (
-                !remoteUrl.includes('https://streetwarpstorage.blob.core.windows.net')
+                !remoteUrl.includes('https://streetwarpstorage')
             ) {
                 url += `?src=${encodeURIComponent(remoteUrl)}`;
             }
