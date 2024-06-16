@@ -61,9 +61,6 @@ $dropBtn.addEventListener('click', (e) => {
 });
 
 let metadata: TFetchMetadataOutput | undefined;
-const defaultSrc = `https://streetwarpstorage.blob.core.windows.net/output/${key}.mp4`;
-const urlParamSrc = new URLSearchParams(window.location.search).get('src');
-$video.src = urlParamSrc != null && urlParamSrc.length > 0 ? urlParamSrc : defaultSrc;
 
 const getCurrentFrameExact = () =>
     ($video.currentTime / $video.duration) * metadata.gpsPoints.length;
@@ -119,6 +116,22 @@ async function main() {
             getDurationSinceVideoCreation({ key }),
         ]);
         metadata = metadataResult;
+        const { uploadRegion } = metadata;
+        const defaultUrls = {
+            na: 'https://streetwarpstorage.blob.core.windows.net/output/',
+            eu: 'https://streetwarpstorageeu.blob.core.windows.net/output/',
+            as: 'https://streetwarpstorageas.blob.core.windows.net/output/',
+        };
+        const urlParamSrc = new URLSearchParams(window.location.search).get('src');
+        if (urlParamSrc != null && urlParamSrc.length > 0) {
+            $video.src = urlParamSrc;
+        } else if (uploadRegion != null && defaultUrls.hasOwnProperty(uploadRegion)) {
+            $video.src = `${defaultUrls[uploadRegion]}${key}.mp4`;
+        } else {
+            // Assume 'na' region
+            $video.src = `${defaultUrls['na']}${key}.mp4`;
+        }
+
         // Humanize creationMs duration
         const humanizer = new HumanizeDuration(new HumanizeDurationLanguage());
         const videoAgeTime = humanizer.humanize(durationMs, {

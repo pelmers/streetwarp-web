@@ -4,6 +4,8 @@ function optional<X extends t.Mixed>(typ: X) {
     return t.union([t.null, t.undefined, typ]);
 }
 
+const RegionString = t.union([t.literal('na'), t.literal('eu'), t.literal('as')]);
+
 const LatLng = t.type({
     lat: t.number,
     lng: t.number,
@@ -32,6 +34,9 @@ export const FetchMetadataOutput = t.type({
     name: optional(t.string),
     fileSizeBytes: optional(t.number),
     isPublic: optional(t.boolean),
+    // A little bit sloppy: the uploadRegion is only added after the video is uploaded,
+    // the remote fetch data has no idea where the user will upload so it'll be undefined
+    uploadRegion: optional(RegionString),
 });
 export type TFetchMetadataOutput = t.TypeOf<typeof FetchMetadataOutput>;
 const GetStravaStatusInput = t.type({
@@ -87,7 +92,7 @@ const BuildHyperlapseInput = t.type({
         extension: t.union([t.literal('json'), t.literal('gpx')]),
     }),
     mode: t.union([t.literal('fast'), t.literal('med'), t.literal('slow')]),
-    uploadRegion: t.union([t.literal('na'), t.literal('eu'), t.literal('as')]),
+    uploadRegion: RegionString,
     optimize: t.boolean,
     isPublic: t.boolean,
 });

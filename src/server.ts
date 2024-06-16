@@ -341,6 +341,7 @@ function handleRpcConnection(socket: ws, req: IncomingMessage) {
 
             d(`Hyperlapse [${key}] complete, saved to remote URL ${remoteUrl}`);
             metadataResult.isPublic = msg.isPublic;
+            metadataResult.uploadRegion = msg.uploadRegion;
             await util.promisify(fs.writeFile)(
                 metadataPath,
                 JSON.stringify(metadataResult)
@@ -389,11 +390,11 @@ const _getPublicVideos = eStderrQuiet(async () => {
     const recentVideos = (
         await Promise.all(
             videos.map(async (video) => {
-                // Filter for all with creation date of less than 96 hours old, and isPublic: true
+                // Filter for all with creation date of less than 336 hours old, and isPublic: true
                 const metadataPath = r(`video/${video}`);
                 const stat = await util.promisify(fs.stat)(metadataPath);
                 const durationSinceCreation = Date.now() - stat.mtimeMs;
-                if (durationSinceCreation < 96 * 60 * 60 * 1000) {
+                if (durationSinceCreation < 336 * 60 * 60 * 1000) {
                     return video;
                 } else {
                     return null;
