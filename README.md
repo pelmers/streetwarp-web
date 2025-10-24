@@ -23,8 +23,7 @@ the web server.
 -   Several output options to trade-off processing speed and result quality
 -   Animated route during video playback (using [mapbox](https://www.mapbox.com/))
 
-### Usage
-
+### Development
 ```
 git submodule update --init --recursive
 yarn
@@ -43,6 +42,15 @@ STRAVA_REDIRECT_URI
 STRAVA_CLIENT_SECRET
 MAPBOX_API_KEY
 ```
+
+### Deployment
+
+```
+git submodule update --init --recursive
+docker run --init -it --rm -p 4041:4041 -v $(pwd)/video:/app/video [env vars] streetwarp-web
+```
+
+Use `-e env_var=value` for all the required variables listed above.
 
 ### Recent Changes
 
