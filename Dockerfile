@@ -2,7 +2,7 @@
 # Builds the app and runs the bundled server. Persist the generated
 # videos/metadata by mounting the host `video` directory into the container
 
-FROM node:22-alpine
+FROM node:22-slim
 
 WORKDIR /app
 
