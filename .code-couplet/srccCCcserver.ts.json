@@ -1,86 +1,86 @@
 {
-  "version": 1,
-  "comments": [
-    {
-      "commentRange": {
-        "start": {
-          "line": 453,
-          "char": 9
+    "version": 1,
+    "comments": [
+        {
+            "commentRange": {
+                "start": {
+                    "line": 453,
+                    "char": 9
+                },
+                "end": {
+                    "line": 453,
+                    "char": 18
+                }
+            },
+            "codeRange": {
+                "start": {
+                    "line": 456,
+                    "char": 3
+                },
+                "end": {
+                    "line": 456,
+                    "char": 17
+                }
+            },
+            "codeRelativePath": "",
+            "commentValue": "5 minutes",
+            "codeValue": "5 * 60 * 1000)",
+            "id": 1
         },
-        "end": {
-          "line": 453,
-          "char": 18
-        }
-      },
-      "codeRange": {
-        "start": {
-          "line": 456,
-          "char": 3
+        {
+            "commentRange": {
+                "start": {
+                    "line": 392,
+                    "char": 66
+                },
+                "end": {
+                    "line": 392,
+                    "char": 79
+                }
+            },
+            "codeRange": {
+                "start": {
+                    "line": 396,
+                    "char": 44
+                },
+                "end": {
+                    "line": 396,
+                    "char": 64
+                }
+            },
+            "codeRelativePath": "",
+            "commentValue": "336 hours old",
+            "codeValue": "336 * 60 * 60 * 1000",
+            "id": 2
         },
-        "end": {
-          "line": 456,
-          "char": 17
+        {
+            "commentRange": {
+                "start": {
+                    "line": 349,
+                    "char": 0
+                },
+                "end": {
+                    "line": 350,
+                    "char": 58
+                }
+            },
+            "codeRange": {
+                "start": {
+                    "line": 351,
+                    "char": 0
+                },
+                "end": {
+                    "line": 355,
+                    "char": 13
+                }
+            },
+            "codeRelativePath": "",
+            "commentValue": "            // streetwarpstorage URL is already known to the client as the default,\n            // so only if it is different, then we pass it",
+            "codeValue": "            if (\n                !remoteUrl.includes('https://streetwarpstorage')\n            ) {\n                url += `?src=${encodeURIComponent(remoteUrl)}`;\n            }",
+            "id": 4
         }
-      },
-      "codeRelativePath": "",
-      "commentValue": "5 minutes",
-      "codeValue": "5 * 60 * 1000)",
-      "id": 1
-    },
-    {
-      "commentRange": {
-        "start": {
-          "line": 392,
-          "char": 66
-        },
-        "end": {
-          "line": 392,
-          "char": 79
-        }
-      },
-      "codeRange": {
-        "start": {
-          "line": 396,
-          "char": 44
-        },
-        "end": {
-          "line": 396,
-          "char": 64
-        }
-      },
-      "codeRelativePath": "",
-      "commentValue": "336 hours old",
-      "codeValue": "336 * 60 * 60 * 1000",
-      "id": 2
-    },
-    {
-      "commentRange": {
-        "start": {
-          "line": 349,
-          "char": 0
-        },
-        "end": {
-          "line": 350,
-          "char": 58
-        }
-      },
-      "codeRange": {
-        "start": {
-          "line": 351,
-          "char": 0
-        },
-        "end": {
-          "line": 355,
-          "char": 13
-        }
-      },
-      "codeRelativePath": "",
-      "commentValue": "            // streetwarpstorage URL is already known to the client as the default,\n            // so only if it is different, then we pass it",
-      "codeValue": "            if (\n                !remoteUrl.includes('https://streetwarpstorage')\n            ) {\n                url += `?src=${encodeURIComponent(remoteUrl)}`;\n            }",
-      "id": 4
+    ],
+    "configuration": {
+        "lineComment": "//"
     }
-  ],
-  "configuration": {
-    "lineComment": "//"
-  }
 }

@@ -1,7 +1,7 @@
 {
-  "version": 1,
-  "comments": [],
-  "configuration": {
-    "lineComment": "//"
-  }
+    "version": 1,
+    "comments": [],
+    "configuration": {
+        "lineComment": "//"
+    }
 }

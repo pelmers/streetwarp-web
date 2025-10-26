@@ -1,34 +1,34 @@
 {
-  "version": 1,
-  "comments": [
-    {
-      "commentRange": {
-        "start": {
-          "line": 130,
-          "char": 0
-        },
-        "end": {
-          "line": 131,
-          "char": 77
+    "version": 1,
+    "comments": [
+        {
+            "commentRange": {
+                "start": {
+                    "line": 130,
+                    "char": 0
+                },
+                "end": {
+                    "line": 131,
+                    "char": 77
+                }
+            },
+            "codeRange": {
+                "start": {
+                    "line": 132,
+                    "char": 0
+                },
+                "end": {
+                    "line": 133,
+                    "char": 60
+                }
+            },
+            "codeRelativePath": "",
+            "commentValue": "    // once we know how many jobs to split into, divide what's left as evenly as possible\n    // i.e. instead of doing 1005 images as 500 + 500 + 5, do 335 + 335 + 335",
+            "codeValue": "    const workerCount = Math.ceil(frames / FRAME_LIMIT_PER_VIDEO);\n    const framesPerWorker = Math.ceil(frames / workerCount);",
+            "id": 0
         }
-      },
-      "codeRange": {
-        "start": {
-          "line": 132,
-          "char": 0
-        },
-        "end": {
-          "line": 133,
-          "char": 60
-        }
-      },
-      "codeRelativePath": "",
-      "commentValue": "    // once we know how many jobs to split into, divide what's left as evenly as possible\n    // i.e. instead of doing 1005 images as 500 + 500 + 5, do 335 + 335 + 335",
-      "codeValue": "    const workerCount = Math.ceil(frames / FRAME_LIMIT_PER_VIDEO);\n    const framesPerWorker = Math.ceil(frames / workerCount);",
-      "id": 0
+    ],
+    "configuration": {
+        "lineComment": "//"
     }
-  ],
-  "configuration": {
-    "lineComment": "//"
-  }
 }

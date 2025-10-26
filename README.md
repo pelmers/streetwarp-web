@@ -24,6 +24,7 @@ the web server.
 -   Animated route during video playback (using [mapbox](https://www.mapbox.com/))
 
 ### Development
+
 ```
 git submodule update --init --recursive
 yarn

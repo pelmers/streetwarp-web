@@ -21,8 +21,24 @@ import {
 } from './steps';
 import { getStravaResult, loadActivity } from './strava';
 
-declare const plausible: any;
 declare const Gmdp: any;
+
+const trackEvent = async (name: string, eventData?: any) => {
+    const response = await fetch('https://app.rybbit.io/api/track', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            api_key: process.env.RYBBIT_API_KEY,
+            site_id: process.env.RYBBIT_SITE_ID,
+            event_name: name,
+            properties: eventData || {},
+        }),
+    });
+
+    return response.json();
+};
 
 async function withProgress<O>(f: () => Promise<O>): Promise<O> {
     const disposable = server.register(ClientCalls.ReceiveProgress, async (msg) => {
@@ -52,7 +68,7 @@ async function catchWithProgress<O>(
     } catch (e) {
         setError(e, note);
         if (logEvent != null) {
-            plausible(logEvent, { props: { message: (e as Error).message || e } });
+            trackEvent(logEvent, { message: (e as Error).message || e });
         }
     }
 }
@@ -168,7 +184,7 @@ $stravaActivityButton.addEventListener('click', async () => {
     $stravaActivityButton.style.display = 'none';
     $stravaActivityInput.style.display = 'none';
     showNextStep();
-    plausible('loaded-activity', { props: { type: 'strava' } });
+    trackEvent('loaded-activity', { type: 'strava' });
 });
 
 const $rwgpsActivityInput = document.querySelector<HTMLInputElement>(
@@ -207,7 +223,7 @@ $rwgpsActivityButton.addEventListener('click', async () => {
     $rwgpsActivityButton.style.display = 'none';
     $rwgpsActivityInput.style.display = 'none';
     showNextStep();
-    plausible('loaded-activity', { props: { type: 'rwgps' } });
+    trackEvent('loaded-activity', { type: 'rwgps' });
 });
 
 const $gmapsDirectionsInput = document.querySelector<HTMLInputElement>(
@@ -263,7 +279,7 @@ $gmapsDirectionsButton.addEventListener('click', async () => {
     $gmapsDirectionsButton.style.display = 'none';
     $gmapsDirectionsInput.style.display = 'none';
     showNextStep();
-    plausible('loaded-activity', { props: { type: 'gmaps' } });
+    trackEvent('loaded-activity', { type: 'gmaps' });
 });
 
 const $gpxInput = document.querySelector<HTMLInputElement>('#gpx-input');
@@ -293,7 +309,7 @@ let gpxContents: Promise<string>;
 function handleFiles(files: FileList) {
     const file = files[0];
     showNextStep(); // fetch-metadata
-    plausible('loaded-activity', { props: { type: 'upload' } });
+    trackEvent('loaded-activity', { type: 'upload' });
     // @ts-ignore text does exist on file api
     gpxContents = file.text();
     const mb = file.size / 1000000;
@@ -340,11 +356,11 @@ $fetchMetadataButton.addEventListener('click', async () => {
     );
     populateStats();
     showNextStep();
-    plausible('fetched-metadata');
+    trackEvent('fetched-metadata');
     document.querySelector<HTMLDivElement>('#api-notes').style.display = 'block';
     showNextStep();
     await waitForNextApiKeyChange();
-    plausible('got-api-key');
+    trackEvent('got-api-key');
     if (currentStepIndex() === 3) {
         showNextStep();
     }
@@ -393,12 +409,12 @@ async function validateToken(token: string): Promise<void> {
     );
     if (response.status !== 200) {
         const message = await response.text();
-        plausible('token-validation-error', { props: { message } });
+        trackEvent('token-validation-error', { message });
         throw new Error(
             `Access key validation failed: ${response.status} - ${response.statusText}, ${message}`
         );
     }
-    plausible('token-validated');
+    trackEvent('token-validated');
 }
 
 function getSelectedRegion() {
@@ -447,7 +463,7 @@ const handleBuildButton = async (mode: string) => {
     if (result != null) {
         // STEP 6: SHOW RESULTS
         document.querySelector<HTMLAnchorElement>('#result-anchor').href = result.url;
-        plausible('hyperlapse-result', { props: mode });
+        trackEvent('hyperlapse-result', { mode });
         showNextStep();
     }
 };
