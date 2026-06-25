@@ -41,8 +41,39 @@ function parsePayload(payload: string) {
     };
 }
 
-export async function getStravaResult(onError?: (e: Error) => void) {
+function stravaResponseParams() {
     const params = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(
+        window.location.hash.startsWith('#')
+            ? window.location.hash.slice(1)
+            : window.location.hash
+    );
+    hashParams.forEach((value, key) => {
+        if (!params.has(key)) {
+            params.set(key, value);
+        }
+    });
+    return params;
+}
+
+function clearStravaResponseParams() {
+    const params = stravaResponseParams();
+    if (
+        !params.has('payload') &&
+        !params.has('error') &&
+        !params.has('code') &&
+        !params.has('scope')
+    ) {
+        return;
+    }
+    const cleanURL = new URL(window.location.href);
+    cleanURL.search = '';
+    cleanURL.hash = '';
+    window.history.replaceState(null, document.title, cleanURL.toString());
+}
+
+export async function getStravaResult(onError?: (e: Error) => void) {
+    const params = stravaResponseParams();
     try {
         const payload = params.get('payload');
         const error = params.get('error');
@@ -60,6 +91,8 @@ export async function getStravaResult(onError?: (e: Error) => void) {
         }
     } catch (e) {
         onError && onError(e);
+    } finally {
+        clearStravaResponseParams();
     }
     return {
         result: {
