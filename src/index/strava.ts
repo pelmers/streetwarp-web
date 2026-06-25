@@ -57,8 +57,6 @@ export async function getStravaResult(onError?: (e: Error) => void) {
                     acceptedScopes: params.get('scope'),
                 },
             });
-        } else {
-            return await getStravaStatus({ response: null });
         }
     } catch (e) {
         onError && onError(e);
